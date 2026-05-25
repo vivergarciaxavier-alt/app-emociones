@@ -382,6 +382,34 @@
       { id: 'autocuidado',     label: 'Autocuidado',      emoji: '❤️' },
     ];
 
+    const FRASES_MOTIVACIONALES = [
+      { texto: 'Estoy construyendo una persona nueva. Una persona de la que esté orgulloso — y de la que esté orgullosa mi familia.', icono: '🌱' },
+      { texto: 'Hago lo que me propongo aunque no tenga ganas.', icono: '🔁' },
+      { texto: 'Cada día mejor que ayer. Sin excepciones.', icono: '📈' },
+      { texto: 'Mi palabra vale. Soy un hombre de palabra.', icono: '🤝' },
+      { texto: 'Me hago cargo sin excusas.', icono: '🎯' },
+      { texto: 'No me dejo pisar, pero nunca piso a nadie.', icono: '⚖️' },
+      { texto: 'Me pongo primero sin culpa. Cuidarme es cuidar a los que quiero.', icono: '❤️' },
+      { texto: 'Familia es prioridad real, no solo de palabra.', icono: '🏠' },
+      { texto: 'Cero alcohol, cero drogas, cero tabaco. Cada día que pasa es una victoria.', icono: '🧘' },
+      { texto: 'Digo lo que pienso. No me miento.', icono: '💬' },
+      { texto: 'Aprendo algo nuevo cada día. La curiosidad me hace crecer.', icono: '🔍' },
+      { texto: 'Construyo una vida que realmente me apetezca vivir.', icono: '✨' },
+    ];
+
+    const MY_PRINCIPLES = [
+      { n: 1,  texto: 'Hago lo que me propongo aunque no tenga ganas.' },
+      { n: 2,  texto: 'Cero alcohol, drogas y tabaco.' },
+      { n: 3,  texto: 'Digo lo que pienso. No me miento.' },
+      { n: 4,  texto: 'Mi palabra vale.' },
+      { n: 5,  texto: 'Me hago cargo sin excusas.' },
+      { n: 6,  texto: 'Familia es prioridad real.' },
+      { n: 7,  texto: 'Aprendo algo nuevo cada día.' },
+      { n: 8,  texto: 'Cada día mejor que ayer.' },
+      { n: 9,  texto: 'No me dejo pisar pero nunca piso a nadie.' },
+      { n: 10, texto: 'Me pongo primero sin culpa.' },
+    ];
+
     const PTI_EMOTIONS = [
       { id: 'culpa', emoji: '😶', name: 'Culpa', color: '#E24B4A',
         when: 'Cuando pienso en el mal que hice durante mi época de consumo.',
@@ -406,7 +434,7 @@
         tools: ['Identifica si has reprimido emociones durante este tiempo — ¿cuáles?', 'Concreta más lo que sientes: describes mucho pero sientes poco. ¿Qué hay debajo?', '¿Te incomoda la parte emocional? Explora por qué y sin juicio.', 'Trabaja la expresión corporal: que lo que sientes se muestre en tu cuerpo.'] },
     ];
 
-    const STEP_NAMES = ['EMOCIÓN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÓN', 'ANCLA', 'VERSÍCULO'];
+    const STEP_NAMES = ['EMOCIÓN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÓN', 'PRESENCIA', 'VERSÍCULO'];
 
     const FEELING_FIELDS = [
       { key: 'what',      label: '¿QUÉ PASÓ?',            placeholder: 'Describe la situación, el momento, el detonante…' },
@@ -668,7 +696,7 @@
             </div>
 
             <div className="sub-tabs">
-              {[['progreso','Mi Progreso'],['patrones','Mis Patrones'],['emociones','Mis Emociones']].map(([id,label]) => (
+              {[['progreso','Mi Progreso'],['patrones','Mis Patrones'],['emociones','Mis Emociones'],['valores','Mis Valores']].map(([id,label]) => (
                 <button key={id} className={`sub-tab${subTab === id ? ' active' : ''}`} onClick={() => setSubTab(id)}>
                   {label}
                 </button>
@@ -838,6 +866,64 @@
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.65 }}>
                     🔒 <strong>Bloqueo emocional</strong> — me pongo una barrera y justifico que no tengo que gestionar las emociones igual que los demás.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab: Mis Valores */}
+            {subTab === 'valores' && (
+              <div>
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 12, fontWeight: 500 }}>
+                  Tus 10 valores
+                </div>
+                <div style={{ background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 24 }}>
+                  {ALL_VALUES.map((v, i) => {
+                    const usageCount = statsData?.valuesCount?.[v.id] || 0;
+                    return (
+                      <div key={v.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px',
+                        borderBottom: i < ALL_VALUES.length - 1 ? '1px solid var(--divider)' : 'none',
+                      }}>
+                        <span style={{ fontSize: 20, flexShrink: 0 }}>{v.emoji}</span>
+                        <span style={{ flex: 1, fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>{v.label}</span>
+                        {usageCount > 0 && (
+                          <span style={{
+                            fontSize: 11, color: 'var(--ph-soft-text)',
+                            background: 'var(--ph-soft-bg)', padding: '2px 8px',
+                            borderRadius: 20, border: '1px solid var(--ph-soft-border)',
+                          }}>{usageCount}×</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 12, fontWeight: 500 }}>
+                  Tus 10 principios
+                </div>
+                <div style={{ background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 16 }}>
+                  {MY_PRINCIPLES.map((p, i) => (
+                    <div key={p.n} style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px',
+                      borderBottom: i < MY_PRINCIPLES.length - 1 ? '1px solid var(--divider)' : 'none',
+                    }}>
+                      <span style={{
+                        fontSize: 13, fontWeight: 700, color: 'var(--ph-orange)',
+                        minWidth: 24, flexShrink: 0, marginTop: 1,
+                      }}>{p.n}.</span>
+                      <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.55 }}>{p.texto}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, var(--ph-soft-bg), var(--card))',
+                  border: '1px solid var(--ph-soft-border)',
+                  borderRadius: 14, padding: '14px 16px', marginTop: 8,
+                }}>
+                  <p className="ej-serif" style={{ fontSize: 14, color: 'var(--ph-soft-text)', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
+                    "Construyo una persona nueva. Una persona de la que estar orgulloso."
                   </p>
                 </div>
               </div>
@@ -1118,7 +1204,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
         if (step === 2) return intensity !== null;
         if (step === 3) return feelings.what.trim() && feelings.generated.trim() && feelings.managed.trim();
         if (step === 4) return true;
-        if (step === 5) return anchorValue !== null;
+        if (step === 5) return true;
         return true;
       };
 
@@ -1301,132 +1387,91 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                   </>
                 )}
 
-                {/* Paso 5 — Ancla */}
-                {step === 5 && (
-                  <>
-                    {selectedPatterns.length > 0 ? (
-                      <>
-                        {selectedPatterns.length > 1 && (
-                          <div className="pti-tabs" style={{ margin: '0 -20px 16px', padding: '0 20px' }}>
-                            {selectedPatterns.map((p, i) => (
-                              <button key={p.id}
-                                className={`pti-tab${activePatternTab === i ? ' active' : ''}`}
-                                style={activePatternTab === i ? { background: activeColor, borderColor: activeColor } : {}}
-                                onClick={() => setActivePatternTab(i)}>
-                                {p.emoji} {p.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {(() => {
-                          const p = selectedPatterns[activePatternTab] || selectedPatterns[0];
-                          return (
-                            <>
-                              {selectedPatterns.length === 1 && (
-                                <h1 className="ej-serif" style={{ fontSize: 24, color: 'var(--text)', lineHeight: 1.15, margin: '0 0 16px 0', fontWeight: 400 }}>
-                                  {p.emoji} {p.label}
-                                </h1>
-                              )}
-                              <div className="pti-card" style={{ borderTop: `3px solid ${activeColor}` }}>
-                                <div className="pti-header">
-                                  <div className="pti-title" style={{ color: activeColor }}>🧰 Tu herramienta de trabajo</div>
-                                  <div className="pti-desc">{p.desc}</div>
-                                </div>
-                                <div className="pti-tools">
-                                  {p.tools.map((t, i) => (
-                                    <div key={i} className="pti-tool">
-                                      <span className="pti-arrow" style={{ color: activeColor }}>→</span>
-                                      <span>{t}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="reflex-card" style={{ borderLeft: `3px solid ${activeColor}` }}>
-                                <div className="reflex-label" style={{ color: activeColor }}>Reflexiona antes de continuar</div>
-                                <div className="reflex-q">
-                                  {selectedPatterns.length === 1 ? p.q : '¿Cuál de estos patrones tuvo más peso hoy? ¿Qué tienen en común?'}
-                                </div>
-                              </div>
-                            </>
-                          );
-                        })()}
-
-                        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, fontWeight: 600, marginBottom: 10 }}>
-                          Tu ancla — ¿con qué valor respondes?
-                        </div>
-                        <div className="ej-grid2" style={{ marginBottom: 8 }}>
-                          {suggestedValues.map(v => {
-                            const isSel = anchorValue === v.id;
-                            return (
-                              <button key={v.id} className={`val-card${isSel ? ' sel' : ''}`}
-                                onClick={() => setAnchorValue(isSel ? null : v.id)}
-                                style={{
-                                  background: isSel ? `${activeColor}1a` : 'var(--card)',
-                                  border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : activeColor + '55'}`,
-                                }}>
-                                <span className="val-emoji">{v.emoji}</span>
-                                <span className="val-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 400 }}>{v.label}</span>
-                                <span className="val-check" style={{ color: activeColor }}>✓</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {otherValues.length > 0 && (
+                {/* Paso 5 — Presencia */}
+                {step === 5 && (() => {
+                  const fraseIdx = Math.floor(Math.random() * FRASES_MOTIVACIONALES.length);
+                  const frase = FRASES_MOTIVACIONALES[fraseIdx];
+                  return (
+                    <>
+                      {selectedPatterns.length > 0 && (() => {
+                        const p = selectedPatterns[activePatternTab] || selectedPatterns[0];
+                        return (
                           <>
-                            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: '12px 0 8px' }}>
-                              Otros valores
-                            </div>
-                            <div className="ej-grid2">
-                              {otherValues.map(v => {
-                                const isSel = anchorValue === v.id;
-                                return (
-                                  <button key={v.id} className={`val-card${isSel ? ' sel' : ''}`}
-                                    onClick={() => setAnchorValue(isSel ? null : v.id)}
-                                    style={{
-                                      background: isSel ? `${activeColor}1a` : 'var(--card)',
-                                      border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : 'var(--border)'}`,
-                                    }}>
-                                    <span className="val-emoji">{v.emoji}</span>
-                                    <span className="val-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 400 }}>{v.label}</span>
-                                    <span className="val-check" style={{ color: activeColor }}>✓</span>
+                            {selectedPatterns.length > 1 && (
+                              <div className="pti-tabs" style={{ margin: '0 -20px 16px', padding: '0 20px' }}>
+                                {selectedPatterns.map((pt, i) => (
+                                  <button key={pt.id}
+                                    className={`pti-tab${activePatternTab === i ? ' active' : ''}`}
+                                    style={activePatternTab === i ? { background: activeColor, borderColor: activeColor } : {}}
+                                    onClick={() => setActivePatternTab(i)}>
+                                    {pt.emoji} {pt.label}
                                   </button>
-                                );
-                              })}
+                                ))}
+                              </div>
+                            )}
+                            <div className="pti-card" style={{ borderTop: `3px solid ${activeColor}`, marginBottom: 20 }}>
+                              <div className="pti-header">
+                                <div className="pti-title" style={{ color: activeColor }}>🧰 Tu herramienta ahora</div>
+                              </div>
+                              <div className="pti-tools">
+                                {p.tools.map((t, i) => (
+                                  <div key={i} className="pti-tool">
+                                    <span className="pti-arrow" style={{ color: activeColor }}>→</span>
+                                    <span>{t}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', fontWeight: 400 }}>
-                          Tu ancla<br />de hoy
-                        </h1>
-                        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
-                          ¿Con qué valor quieres responder a lo que viviste?
+                        );
+                      })()}
+
+                      {/* Tarjeta de presencia rotatoria */}
+                      <div style={{
+                        background: 'linear-gradient(135deg, var(--ph-soft-bg) 0%, var(--card) 100%)',
+                        border: '1px solid var(--ph-soft-border)',
+                        borderRadius: 20,
+                        padding: '32px 24px',
+                        textAlign: 'center',
+                        marginBottom: 20,
+                        position: 'relative',
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                          background: 'linear-gradient(90deg, var(--ph-orange), var(--ph-soft-border))',
+                          borderRadius: '20px 20px 0 0',
+                        }} />
+                        <div style={{ fontSize: 36, marginBottom: 16 }}>{frase.icono}</div>
+                        <p className="ej-serif" style={{
+                          fontSize: 20,
+                          lineHeight: 1.5,
+                          color: 'var(--text)',
+                          fontWeight: 400,
+                          fontStyle: 'italic',
+                          margin: '0 0 20px 0',
+                        }}>
+                          "{frase.texto}"
                         </p>
-                        <div className="ej-grid2">
-                          {ALL_VALUES.map(v => {
-                            const isSel = anchorValue === v.id;
-                            return (
-                              <button key={v.id} className={`val-card${isSel ? ' sel' : ''}`}
-                                onClick={() => setAnchorValue(isSel ? null : v.id)}
-                                style={{
-                                  background: isSel ? `${activeColor}1a` : 'var(--card)',
-                                  border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : 'var(--border)'}`,
-                                }}>
-                                <span className="val-emoji">{v.emoji}</span>
-                                <span className="val-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 400 }}>{v.label}</span>
-                                <span className="val-check" style={{ color: activeColor }}>✓</span>
-                              </button>
-                            );
-                          })}
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
+                          {FRASES_MOTIVACIONALES.map((_, i) => (
+                            <div key={i} style={{
+                              width: i === fraseIdx ? 16 : 5,
+                              height: 5,
+                              borderRadius: 3,
+                              background: i === fraseIdx ? 'var(--ph-orange)' : 'var(--border)',
+                              transition: 'all 0.3s ease',
+                            }} />
+                          ))}
                         </div>
-                      </>
-                    )}
-                  </>
-                )}
+                      </div>
+
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.6 }}>
+                        Léelo. Respira. Cuando estés listo, recibe tu versículo.
+                      </p>
+                    </>
+                  );
+                })()}
 
                 {/* Paso 6 — Versículo */}
                 {step === 6 && (
@@ -1539,7 +1584,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                 )}
                 {step < 6 && (
                   <button className="ej-btn ej-main" disabled={!canContinue()} onClick={handleNext} style={{ flex: 1, padding: 15, borderRadius: 14, fontSize: 15, fontWeight: 600, background: canContinue() ? activeColor : 'var(--btn-off-bg)', color: canContinue() ? '#fff' : 'var(--btn-off-text)', border: 'none' }}>
-                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrón' : step === 5 ? 'Recibir versículo' : 'Continuar'}
+                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrón' : step === 5 ? '📖 Recibir versículo' : 'Continuar'}
                   </button>
                 )}
                 {step === 6 && !loading && verse && (
