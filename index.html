@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Emociones" />
+  <meta name="theme-color" content="#faf7f4" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Emociones</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    html, body { background: var(--bg); transition: background 0.3s ease; }
+    body { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+
+    /* ── Tokens — modo oscuro (defecto) ── */
+    :root {
+      --bg:              #0e1a26;
+      --card:            #172331;
+      --card-hover:      #1e2d3e;
+      --border:          #2a3d52;
+      --text:            #f0ece8;
+      --text-card:       #e0dcd8;
+      --text-secondary:  #7a9ab5;
+      --text-muted:      #3a4d60;
+      --text-verse:      #c0ccd8;
+      --btn-off-bg:      #172331;
+      --btn-off-text:    #3a4d60;
+      --num-off-text:    #7a9ab5;
+      --divider:         #2a3d52;
+      --input-bg:        #172331;
+      --placeholder:     #3a4d60;
+      --modal-bg:        rgba(0,0,0,0.85);
+      --modal-card:      #172331;
+      --ph-orange:       #F26522;
+      --ph-navy:         #1B3A5C;
+      --ph-soft-bg:      #2a1a10;
+      --ph-soft-text:    #f0a070;
+      --ph-soft-border:  #5a3020;
+    }
+
+    /* ── Tokens — modo claro ── */
+    .light {
+      --bg:              #faf7f4;
+      --card:            #ffffff;
+      --card-hover:      #fdf9f6;
+      --border:          #e8ddd5;
+      --text:            #1B3A5C;
+      --text-card:       #1B3A5C;
+      --text-secondary:  #7a8fa3;
+      --text-muted:      #c8bfb8;
+      --text-verse:      #4a5a6a;
+      --btn-off-bg:      #f0ede8;
+      --btn-off-text:    #b8b0a8;
+      --num-off-text:    #9aabb8;
+      --divider:         #ede6de;
+      --input-bg:        #ffffff;
+      --placeholder:     #c8c0b8;
+      --modal-bg:        rgba(0,0,0,0.5);
+      --modal-card:      #ffffff;
+      --ph-orange:       #F26522;
+      --ph-navy:         #1B3A5C;
+      --ph-soft-bg:      #fff3ec;
+      --ph-soft-text:    #c4612a;
+      --ph-soft-border:  #f5c5a3;
+    }
+
+    .ej-root {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+      padding-top: max(32px, env(safe-area-inset-top));
+      padding-bottom: calc(70px + env(safe-area-inset-bottom));
+      padding-left: 20px;
+      padding-right: 20px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .ej-container { width: 100%; max-width: 390px; }
+    .ej-serif { font-family: 'DM Serif Display', Georgia, serif; }
+
+    .ej-step { animation: stepIn 0.35s ease-out; }
+    @keyframes stepIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseEmoji {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(.95); }
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform:scale(.6); }
+      to   { opacity:1; transform:scale(1); }
+    }
+    .ej-pulse { animation: pulseEmoji 2s ease-in-out infinite; }
+    .ej-check { animation: fadeIn .15s ease-out; display: inline-block; }
+
+    .ej-textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.6;
+      min-height: 80px;
+      resize: none;
+      transition: border-color .4s ease, background .3s ease;
+      -webkit-appearance: none;
+    }
+    .ej-textarea::placeholder { color: var(--placeholder); }
+    .ej-textarea:focus { outline: none; border-color: var(--active-color, var(--ph-orange)); }
+
+    .ej-btn { font-family: inherit; cursor: pointer; -webkit-appearance: none; transition: all 0.3s ease; }
+    .ej-btn:disabled { cursor: not-allowed; }
+    .ej-main:not(:disabled):active { transform: scale(.98); }
+
+    .theme-toggle {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+
+    .historial-list {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .hist-card { transition: all 0.3s ease; }
+    .hist-card:active { transform: scale(0.99); }
+
+    .ej-grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .pat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 88px;
+      -webkit-appearance: none;
+    }
+    .pat-card:active { transform: scale(0.98); }
+    .pat-emoji { font-size: 26px; line-height: 1; display: block; transition: transform 0.3s ease; }
+    .pat-card.sel .pat-emoji { transform: scale(1.12); }
+    .pat-name { font-size: 13px; font-weight: 500; color: var(--text-card); line-height: 1.3; }
+
+    .val-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 48px;
+      -webkit-appearance: none;
+    }
+    .val-card:active { transform: scale(0.98); }
+    .val-emoji { font-size: 16px; }
+    .val-name { font-size: 13px; color: var(--text-card); flex: 1; }
+    .val-check { font-size: 11px; display: none; margin-left: auto; }
+    .val-card.sel .val-check { display: block; }
+
+    .pti-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .pti-header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--divider);
+    }
+    .pti-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 4px; }
+    .pti-desc { font-size: 13px; color: var(--text-verse); line-height: 1.65; }
+    .pti-tools { padding: 0 16px 14px; }
+    .pti-tool { display: flex; gap: 8px; font-size: 13px; color: var(--text-card); line-height: 1.6; padding: 8px 0; border-top: 1px solid var(--divider); }
+    .pti-tool:first-child { border-top: none; padding-top: 12px; }
+    .pti-arrow { flex-shrink: 0; margin-top: 3px; font-size: 11px; }
+
+    .pti-tabs { display: flex; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--divider); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pti-tab { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; font-size: 12px; font-family: inherit; cursor: pointer; color: var(--text-secondary); transition: all 0.2s; white-space: nowrap; }
+    .pti-tab.active { color: #fff; border-color: transparent; }
+
+    .reflex-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .reflex-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 7px; }
+    .reflex-q { font-family: 'DM Serif Display', Georgia, serif; font-size: 15px; font-style: italic; line-height: 1.65; color: var(--text); }
+
+    /* Tab bar */
+    .tab-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 100;
+      transition: background 0.3s ease;
+    }
+    .tab-item {
+      flex: 1; padding: 10px 4px 12px;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: none; border: none; cursor: pointer; font-family: inherit;
+      transition: color 0.2s ease;
+    }
+    .tab-item i { font-size: 20px; }
+    .tab-item span { font-size: 10px; }
+
+    /* Sub-tabs para Mi PTI */
+    .sub-tabs {
+      display: flex; gap: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3px;
+      margin-bottom: 20px;
+    }
+    .sub-tab {
+      flex: 1; padding: 8px 4px; border-radius: 10px;
+      border: none; background: transparent; cursor: pointer;
+      font-size: 12px; font-family: inherit; font-weight: 500;
+      color: var(--text-secondary); transition: all 0.2s;
+      text-align: center;
+    }
+    .sub-tab.active {
+      background: var(--ph-orange);
+      color: #fff;
+    }
+
+    /* PTI expandible */
+    .pti-pat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .pti-pat-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; cursor: pointer;
+    }
+    .pti-pat-body {
+      padding: 0 16px 14px;
+      border-top: 1px solid var(--divider);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    /* ── Supabase ── */
+    const SUPABASE_URL = 'https://kqhsgmvsxdyyhpcqwzwr.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_qOWZbgkBMN4WYDf_9cCKDg_70dHawLR';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    /* ── Datos ── */
+    const EMOTIONS = [
+      { name: 'Culpa',             emoji: '😶', color: '#E24B4A' },
+      { name: 'Vergüenza',         emoji: '🙈', color: '#C97B1A' },
+      { name: 'Tristeza',          emoji: '💧', color: '#4A9EE0' },
+      { name: 'Rabia',             emoji: '🔥', color: '#E05A28' },
+      { name: 'Ansiedad',          emoji: '⚡', color: '#F0A500' },
+      { name: 'Miedo',             emoji: '🌑', color: '#8B7FE8' },
+      { name: 'Bloqueo emocional', emoji: '🔒', color: '#6B7280' },
+      { name: 'Alegría',           emoji: '☀️', color: '#6BAA28' },
+      { name: 'Serenidad',         emoji: '🌿', color: '#1DB87A' },
+      { name: 'Gratitud',          emoji: '🤍', color: '#E05890' },
+    ];
+
+    const PATTERNS = [
+      { id: 'impulsividad', emoji: '⚡', label: 'Impulsividad',
+        desc: 'Actuaste sin pensar en las consecuencias. La emoción fue más rápida que tu capacidad de parar.',
+        tools: ['Detecta tus señales físicas antes de explotar: mandíbula tensa, pecho apretado, respiración rápida.', 'Para. Cuenta hasta 10. No improvises la respuesta.', '¿Qué perderé si actúo ahora desde este lugar?'],
+        values: ['constancia', 'sobriedad', 'responsabilidad'],
+        q: '¿En qué momento podrías haber hecho una pausa hoy? ¿Qué señal te lo indicaba?' },
+      { id: 'extremismo', emoji: '🔴', label: 'Extremismo',
+        desc: 'Todo o nada. La escala de grises desaparece y eso genera decisiones más intensas de lo necesario.',
+        tools: ['Puntúa la situación del 1 al 10. ¿Realmente es un 10?', '¿Qué haría alguien equilibrado en este momento?', 'Observa si usas palabras absolutas: "siempre", "nunca", "todo", "nada".'],
+        values: ['constancia', 'respeto', 'crecimiento'],
+        q: '¿Qué habría cambiado si hubieras visto esto como un 6 en lugar de un 10?' },
+      { id: 'agradador', emoji: '🤝', label: 'Agradador',
+        desc: 'Pusiste el bienestar de los demás por delante del tuyo sin mirar lo que tú necesitabas.',
+        tools: ['Identifica qué necesitabas tú antes de pensar en los demás.', 'Di lo que piensas realmente, aunque no sea lo que quieren escuchar.', 'Poner tus necesidades no es egoísmo — es autocuidado.'],
+        values: ['honestidad', 'integridad', 'autocuidado'],
+        q: '¿Qué necesitabas tú realmente, más allá de lo que esperaban los demás?' },
+      { id: 'limites', emoji: '🚫', label: 'Sin límites',
+        desc: 'Te costó decir que no, o los pusiste demasiado tarde cuando la situación ya se desbordó.',
+        tools: ['¿En qué momento concreto debías haber dicho que no?', 'Practica el no en situaciones pequeñas del día a día.', 'Poner límites no daña al otro — es respetarte a ti mismo.'],
+        values: ['integridad', 'respeto', 'autocuidado'],
+        q: '¿En qué momento concreto debías haber dicho que no? ¿Qué te lo impidió?' },
+      { id: 'constancia', emoji: '🔄', label: 'Constancia',
+        desc: 'Empezaste con mucha motivación pero el ritmo no se mantuvo.',
+        tools: ['Divide el objetivo en pasos tan pequeños que sean imposibles de fallar.', 'Un día a la vez. No pienses en la semana entera.', 'Reconoce cualquier avance, por pequeño que sea.'],
+        values: ['constancia', 'responsabilidad', 'crecimiento'],
+        q: '¿Cuál es el paso más pequeño que sí puedes cumplir mañana sin falta?' },
+      { id: 'inseguridad', emoji: '🔒', label: 'Inseguridad',
+        desc: 'Te costó confiar en tu propio criterio. Buscaste validación externa o evitaste tomar postura.',
+        tools: ['Analiza la situación desde tu criterio real antes de buscar la opinión de otros.', 'Recuerda evidencias concretas de veces que actuaste bien — son datos reales.', 'Confía en el análisis, no en el miedo.'],
+        values: ['autocuidado', 'crecimiento', 'constancia'],
+        q: '¿Qué evidencia concreta tienes de que tu criterio en esta situación es válido?' },
+      { id: 'impaciencia', emoji: '⏳', label: 'Impaciencia',
+        desc: 'Las cosas no iban al ritmo que querías y eso generó tensión o decisiones precipitadas.',
+        tools: ['Para antes de querer acelerar. ¿Qué pierdo realmente si espero?', 'Los procesos tienen su tiempo — incluido el tuyo.', '¿Esta impaciencia viene de ansiedad o de necesidad de control?'],
+        values: ['constancia', 'sobriedad', 'respeto'],
+        q: '¿De dónde viene realmente esta prisa — ansiedad, control, o miedo a algo?' },
+      { id: 'autoestima', emoji: '💭', label: 'Autoestima',
+        desc: 'Te sentiste insuficiente o te comparaste con otros de una forma que no le permitirías a nadie.',
+        tools: ['Revisa cómo te estás hablando. ¿Le dirías eso a alguien que quieres?', 'El único punto de comparación válido eres tú de ayer.', 'Anota algo concreto que hiciste bien hoy, por pequeño que sea.'],
+        values: ['autocuidado', 'crecimiento', 'honestidad'],
+        q: '¿Qué le dirías a alguien que quieres si estuviera viviendo exactamente lo que tú viviste hoy?' },
+      { id: 'incoherencia', emoji: '🎭', label: 'Incoherencia',
+        desc: 'Hubo diferencia entre lo que dijiste que harías y lo que hiciste.',
+        tools: ['Identifica el momento exacto donde la acción se separó de la intención.', 'Comprométete solo con lo que puedes cumplir.', 'Busca el porqué — a veces es miedo, a veces es evitación.'],
+        values: ['honestidad', 'integridad', 'responsabilidad'],
+        q: '¿Qué diferencia hay entre lo que dijiste y lo que hiciste? ¿Qué lo explica?' },
+      { id: 'humildad', emoji: '👑', label: 'Humildad',
+        desc: 'Tu visión estuvo por encima de la de los demás. Costó dar la razón o reconocer un límite propio.',
+        tools: ['Practica el "no sé". Permite no tener siempre la respuesta.', 'Cuando alguien diga algo válido, reconóceselo antes de añadir tu perspectiva.', '¿Qué puedo aprender de cómo lo ve el otro?'],
+        values: ['respeto', 'honestidad', 'curiosidad'],
+        q: '¿Qué podrías aprender de la perspectiva de la otra persona en esta situación?' },
+    ];
+
+    const ALL_VALUES = [
+      { id: 'constancia',      label: 'Constancia',      emoji: '🔁' },
+      { id: 'sobriedad',       label: 'Sobriedad',        emoji: '🧘' },
+      { id: 'honestidad',      label: 'Honestidad',       emoji: '💬' },
+      { id: 'integridad',      label: 'Integridad',       emoji: '⚖️' },
+      { id: 'responsabilidad', label: 'Responsabilidad',  emoji: '🎯' },
+      { id: 'familia',         label: 'Familia',          emoji: '🏠' },
+      { id: 'curiosidad',      label: 'Curiosidad',       emoji: '🔍' },
+      { id: 'crecimiento',     label: 'Crecimiento',      emoji: '🌱' },
+      { id: 'respeto',         label: 'Respeto',          emoji: '🤲' },
+      { id: 'autocuidado',     label: 'Autocuidado',      emoji: '❤️' },
+    ];
+
+    const PTI_EMOTIONS = [
+      { id: 'culpa', emoji: '😶', name: 'Culpa', color: '#E24B4A',
+        when: 'Cuando pienso en el mal que hice durante mi época de consumo.',
+        tools: ['Transforma la culpa en responsabilidad: ¿qué puedo hacer diferente hoy?', 'Escribe cómo te sientes sin filtros — sacar la culpa del cuerpo.'] },
+      { id: 'verguenza', emoji: '🙈', name: 'Vergüenza', color: '#C97B1A',
+        when: 'Cuando pienso en cómo traté a personas importantes para mí y recuerdo momentos del consumo.',
+        tools: ['Busca la situación concreta que te provoca vergüenza y trabaja cómo transformarla.', 'Escribe una carta emocional sobre esta época — sin enviársela a nadie.'] },
+      { id: 'tristeza', emoji: '💧', name: 'Tristeza', color: '#4A9EE0',
+        when: 'Cuando pienso en lo que perdí durante mi consumo.',
+        tools: ['Expresa cómo te sientes en el grupo — no te quedes solo con la tristeza.', 'Escribe sobre lo que perdiste — nombrarlo es el primer paso para aceptarlo.'] },
+      { id: 'rabia', emoji: '🔥', name: 'Rabia', color: '#E05A28',
+        when: 'Reacciono con rabia cuando me encuentro molesto.',
+        tools: ['Detecta tus señales de alerta antes de explotar: tensión en mandíbula, pecho, respiración.', 'Para. Respira. No saltes antes de hacer una pausa consciente.'] },
+      { id: 'ansiedad', emoji: '⚡', name: 'Ansiedad', color: '#F0A500',
+        when: 'La identifico en señales físicas y psicológicas que aparecen ante situaciones de presión.',
+        tools: ['Reconoce tus propias señales de ansiedad — físicas y psicológicas — antes de que escalen.', 'Practica técnicas de relajación: respiración lenta, consciencia del cuerpo.'] },
+      { id: 'miedo', emoji: '🌑', name: 'Miedo', color: '#8B7FE8',
+        when: 'Miedo a diferentes situaciones que han surgido a raíz del consumo.',
+        tools: ['El miedo es una emoción que tienes que poder sentir — aprende a gestionarla, no a evitarla.', 'Afronta situaciones del día a día que evitas. Pequeños pasos, sin huir.'] },
+      { id: 'bloqueo', emoji: '🔒', name: 'Bloqueo emocional', color: '#6B7280',
+        when: 'Me pongo una barrera, justifico que no tengo que gestionar las emociones igual que los demás. Evito la responsabilidad emocional.',
+        tools: ['Identifica si has reprimido emociones durante este tiempo — ¿cuáles?', 'Concreta más lo que sientes: describes mucho pero sientes poco. ¿Qué hay debajo?', '¿Te incomoda la parte emocional? Explora por qué y sin juicio.', 'Trabaja la expresión corporal: que lo que sientes se muestre en tu cuerpo.'] },
+    ];
+
+    const STEP_NAMES = ['EMOCIÓN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÓN', 'ANCLA', 'VERSÍCULO'];
+
+    const FEELING_FIELDS = [
+      { key: 'what',      label: '¿QUÉ PASÓ?',            placeholder: 'Describe la situación, el momento, el detonante…' },
+      { key: 'generated', label: '¿QUÉ GENERÓ EN TI?',    placeholder: 'Sensaciones físicas, pensamientos, recuerdos…'    },
+      { key: 'managed',   label: '¿CÓMO LO GESTIONASTE?', placeholder: 'Lo que hiciste, lo que evitaste, lo que necesitabas…' },
+    ];
+
+    function intensityLabel(n) {
+      if (n <= 3) return 'Leve — manejable';
+      if (n <= 6) return 'Moderada — merece atención';
+      if (n <= 8) return 'Intensa — regístrala bien';
+      return 'Muy alta — cuídate';
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('es-ES', {
+        weekday: 'short', day: 'numeric', month: 'short',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    /* ── Tab Bar ── */
+    function TabBar({ activeTab, setActiveTab }) {
+      const tabs = [
+        { id: 'home',      icon: 'ti-home',    label: 'Inicio'    },
+        { id: 'registro',  icon: 'ti-pencil',  label: 'Registro'  },
+        { id: 'pti',       icon: 'ti-map',     label: 'Mi PTI'    },
+        { id: 'historial', icon: 'ti-clock',   label: 'Historial' },
+      ];
+      return (
+        <nav className="tab-bar">
+          {tabs.map(t => (
+            <button key={t.id} className="tab-item" onClick={() => setActiveTab(t.id)}
+              style={{ color: activeTab === t.id ? 'var(--ph-orange)' : 'var(--text-secondary)' }}>
+              <i className={`ti ${t.icon}`} aria-hidden="true" />
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </nav>
+      );
+    }
+
+    /* ── Pantalla Home ── */
+    function HomeScreen({ setActiveTab, darkMode, setDarkMode }) {
+      const [stats, setStats] = useState(null);
+      const [loadingStats, setLoadingStats] = useState(true);
+
+      useEffect(() => { loadStats(); }, []);
+
+      const loadStats = async () => {
+        setLoadingStats(true);
+        const thirtyAgo = new Date();
+        thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+        const sevenAgo = new Date();
+        sevenAgo.setDate(sevenAgo.getDate() - 7);
+
+        const { data } = await db.from('registros')
+          .select('created_at, patterns_active, emotion_name, verse_text, verse_reference')
+          .gte('created_at', thirtyAgo.toISOString())
+          .order('created_at', { ascending: false });
+
+        if (data) {
+          const weekData = data.filter(r => new Date(r.created_at) >= sevenAgo);
+
+          const patternCount = {};
+          weekData.forEach(r => {
+            if (r.patterns_active && r.patterns_active.length) {
+              r.patterns_active.forEach(p => { patternCount[p] = (patternCount[p] || 0) + 1; });
+            }
+          });
+          const topPatterns = Object.entries(patternCount)
+            .sort((a, b) => b[1] - a[1]).slice(0, 3)
+            .map(([name, count]) => ({ name, count }));
+
+          const days = new Set(data.map(r => new Date(r.created_at).toLocaleDateString('es-ES')));
+          let streak = 0;
+          const today = new Date();
+          for (let i = 0; i < 30; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            if (days.has(d.toLocaleDateString('es-ES'))) { streak++; } else { break; }
+          }
+
+          setStats({ weekCount: weekData.length, topPatterns, streak, lastRecord: data[0] || null });
+        }
+        setLoadingStats(false);
+      };
+
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
+
+      return (
+        <div className={`ej-root${darkMode ? '' : ' light'}`}>
+          <div className="ej-container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                Projecte Home
+              </span>
+              <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+            </div>
+
+            <h1 style={{ fontSize: 28, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>
+              {greeting}, Xavi
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
+              {!loadingStats && stats ? (stats.streak > 0 ? `Llevas ${stats.streak} día${stats.streak > 1 ? 's' : ''} registrando` : 'Empieza tu registro de hoy') : ' '}
+            </p>
+
+            <button onClick={() => setActiveTab('registro')} style={{
+              width: '100%', padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+              background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)',
+              color: 'var(--ph-soft-text)', fontSize: 15, fontWeight: 500,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              fontFamily: 'inherit', marginBottom: 24, transition: 'all 0.2s',
+            }}>
+              ✏️ Registrar emoción
+            </button>
+
+            {loadingStats && (
+              <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)', fontSize: 13 }}>
+                Cargando…
+              </div>
+            )}
+
+            {!loadingStats && stats && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+                  <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 26, fontWeight: 500, color: 'var(--ph-orange)', marginBottom: 2 }}>{stats.weekCount}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>registros esta semana</div>
+                  </div>
+                  <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 26, fontWeight: 500, color: 'var(--ph-navy)', marginBottom: 2 }}>{stats.streak}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>días de racha</div>
+                  </div>
+                </div>
+
+                {stats.topPatterns.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
+                      Patrones activos esta semana
+                    </div>
+                    <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', marginBottom: 24, overflow: 'hidden' }}>
+                      {stats.topPatterns.map((p, i) => {
+                        const pd = PATTERNS.find(x => x.label === p.name);
+                        return (
+                          <div key={p.name} style={{
+                            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                            borderBottom: i < stats.topPatterns.length - 1 ? '1px solid var(--border)' : 'none',
+                          }}>
+                            <span style={{ fontSize: 18 }}>{pd?.emoji || '•'}</span>
+                            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)', background: 'var(--ph-soft-bg)', padding: '2px 8px', borderRadius: 20, border: '1px solid var(--ph-soft-border)', color: 'var(--ph-soft-text)' }}>{p.count}×</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {stats.topPatterns.length === 0 && (
+                  <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 24, textAlign: 'center' }}>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Aún no hay patrones esta semana.<br/>¡Haz tu primer registro!</p>
+                  </div>
+                )}
+
+                {stats.lastRecord?.verse_text && (
+                  <>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
+                      Último versículo
+                    </div>
+                    <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 12, padding: 14, marginBottom: 24 }}>
+                      <p style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--text-verse)', lineHeight: 1.65, margin: '0 0 6px 0' }}>
+                        "{stats.lastRecord.verse_text}"
+                      </p>
+                      <p style={{ fontSize: 11, color: 'var(--ph-soft-text)', margin: 0 }}>
+                        {stats.lastRecord.verse_reference}
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
+                  Tus fortalezas
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'].map(f => (
+                    <div key={f} style={{
+                      background: 'var(--card)', border: '1px solid var(--border)',
+                      borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'var(--text)',
+                    }}>{f}</div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Pantalla Mi PTI ── */
+    function PTIScreen({ darkMode, setDarkMode }) {
+      const [subTab, setSubTab] = useState('progreso');
+      const [statsData, setStatsData] = useState(null);
+      const [loadingStats, setLoadingStats] = useState(true);
+      const [expandedPattern, setExpandedPattern] = useState(null);
+      const [expandedEmotion, setExpandedEmotion] = useState(null);
+
+      useEffect(() => { loadPTIStats(); }, []);
+
+      const loadPTIStats = async () => {
+        setLoadingStats(true);
+        const { data } = await db.from('registros')
+          .select('created_at, patterns_active, emotion_name, values_selected')
+          .order('created_at', { ascending: false });
+
+        if (data) {
+          const patternCount = {};
+          const emotionCount = {};
+          data.forEach(r => {
+            if (r.patterns_active && r.patterns_active.length) {
+              r.patterns_active.forEach(p => { patternCount[p] = (patternCount[p] || 0) + 1; });
+            }
+            if (r.emotion_name) { emotionCount[r.emotion_name] = (emotionCount[r.emotion_name] || 0) + 1; }
+          });
+
+          const sevenAgo = new Date();
+          sevenAgo.setDate(sevenAgo.getDate() - 7);
+          const weekData = data.filter(r => new Date(r.created_at) >= sevenAgo);
+          const days = new Set(data.map(r => new Date(r.created_at).toLocaleDateString('es-ES')));
+          let streak = 0;
+          const today = new Date();
+          for (let i = 0; i < 60; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            if (days.has(d.toLocaleDateString('es-ES'))) { streak++; } else { break; }
+          }
+
+          const topEmotion = Object.entries(emotionCount).sort((a,b) => b[1]-a[1])[0];
+
+          setStatsData({ total: data.length, weekCount: weekData.length, streak, patternCount, topEmotion });
+        }
+        setLoadingStats(false);
+      };
+
+      const phOrange = 'var(--ph-orange)';
+
+      return (
+        <div className={`ej-root${darkMode ? '' : ' light'}`}>
+          <div className="ej-container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)' }}>Mi PTI</h2>
+              <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+            </div>
+
+            <div className="sub-tabs">
+              {[['progreso','Mi Progreso'],['patrones','Mis Patrones'],['emociones','Mis Emociones']].map(([id,label]) => (
+                <button key={id} className={`sub-tab${subTab === id ? ' active' : ''}`} onClick={() => setSubTab(id)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sub-tab: Mi Progreso */}
+            {subTab === 'progreso' && (
+              <div>
+                {loadingStats && <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)', fontSize: 13 }}>Cargando…</div>}
+                {!loadingStats && statsData && (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
+                      <div style={{ background: 'var(--card)', borderRadius: 12, padding: '12px 10px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: 24, fontWeight: 500, color: 'var(--ph-orange)' }}>{statsData.total}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.3 }}>registros totales</div>
+                      </div>
+                      <div style={{ background: 'var(--card)', borderRadius: 12, padding: '12px 10px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: 24, fontWeight: 500, color: 'var(--ph-navy)' }}>{statsData.streak}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.3 }}>días de racha</div>
+                      </div>
+                      <div style={{ background: 'var(--card)', borderRadius: 12, padding: '12px 10px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: 24, fontWeight: 500, color: 'var(--ph-orange)' }}>{statsData.weekCount}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.3 }}>esta semana</div>
+                      </div>
+                    </div>
+
+                    {Object.keys(statsData.patternCount).length > 0 && (
+                      <>
+                        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
+                          Patrones registrados (total)
+                        </div>
+                        <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 20 }}>
+                          {Object.entries(statsData.patternCount).sort((a,b) => b[1]-a[1]).map(([name, count], i, arr) => {
+                            const pd = PATTERNS.find(x => x.label === name);
+                            const max = arr[0][1];
+                            return (
+                              <div key={name} style={{ padding: '10px 16px', borderBottom: i < arr.length-1 ? '1px solid var(--border)' : 'none' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+                                  <span style={{ fontSize: 16 }}>{pd?.emoji || '•'}</span>
+                                  <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{name}</span>
+                                  <span style={{ fontSize: 12, color: 'var(--ph-soft-text)', background: 'var(--ph-soft-bg)', padding: '2px 8px', borderRadius: 20, border: '1px solid var(--ph-soft-border)' }}>{count}×</span>
+                                </div>
+                                <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${(count/max)*100}%`, background: 'var(--ph-orange)', borderRadius: 4, transition: 'width 0.6s ease' }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
+                      Tus fortalezas
+                    </div>
+                    <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', padding: '12px 16px', marginBottom: 8 }}>
+                      {['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'].map((f, i, arr) => (
+                        <div key={f} style={{ fontSize: 13, color: 'var(--text)', padding: '7px 0', borderBottom: i < arr.length-1 ? '1px solid var(--divider)' : 'none' }}>
+                          {f}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginTop: 20, marginBottom: 10, fontWeight: 500 }}>
+                      Factores de protección
+                    </div>
+                    <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', padding: '12px 16px' }}>
+                      {['Ser consciente de mi adicción','Identificar mis emociones','Analizar las situaciones','Mantener el vínculo familiar','Pedir ayuda','Priorizar mi tratamiento y recuperación','Seguir la programación','Ser honesto','Poner límites'].map((f, i, arr) => (
+                        <div key={f} style={{ fontSize: 13, color: 'var(--text-verse)', padding: '7px 0', borderBottom: i < arr.length-1 ? '1px solid var(--divider)' : 'none', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                          <span style={{ color: 'var(--ph-orange)', marginTop: 2, flexShrink: 0 }}>→</span>
+                          <span>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Sub-tab: Mis Patrones */}
+            {subTab === 'patrones' && (
+              <div>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
+                  Toca un patrón para ver las herramientas de trabajo de tu PTI.
+                </p>
+                {PATTERNS.map(p => {
+                  const count = statsData?.patternCount?.[p.label] || 0;
+                  const isOpen = expandedPattern === p.id;
+                  return (
+                    <div key={p.id} className="pti-pat-card" style={{ borderLeft: isOpen ? `3px solid var(--ph-orange)` : '3px solid transparent' }}>
+                      <div className="pti-pat-header" onClick={() => setExpandedPattern(isOpen ? null : p.id)}>
+                        <span style={{ fontSize: 22 }}>{p.emoji}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{p.label}</div>
+                          {count > 0 && <div style={{ fontSize: 11, color: 'var(--ph-soft-text)', marginTop: 2 }}>{count} vez{count !== 1 ? 'es' : ''} registrado</div>}
+                        </div>
+                        <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ fontSize: 16, color: 'var(--text-secondary)' }} aria-hidden="true" />
+                      </div>
+                      {isOpen && (
+                        <div className="pti-pat-body">
+                          <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.65, marginBottom: 12 }}>{p.desc}</p>
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ph-orange)', fontWeight: 700, marginBottom: 8 }}>
+                            🧰 Herramientas de trabajo
+                          </div>
+                          {p.tools.map((t, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-card)', lineHeight: 1.6, padding: '6px 0', borderTop: i === 0 ? 'none' : '1px solid var(--divider)' }}>
+                              <span style={{ color: 'var(--ph-orange)', flexShrink: 0, marginTop: 2 }}>→</span>
+                              <span>{t}</span>
+                            </div>
+                          ))}
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginTop: 14, marginBottom: 6 }}>
+                            Pregunta de reflexión
+                          </div>
+                          <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text)', lineHeight: 1.65, fontFamily: 'DM Serif Display, Georgia, serif' }}>
+                            {p.q}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Sub-tab: Mis Emociones */}
+            {subTab === 'emociones' && (
+              <div>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
+                  Estas son las emociones que trabajas en tu PTI, con las herramientas específicas que te dieron.
+                </p>
+                {PTI_EMOTIONS.map(e => {
+                  const isOpen = expandedEmotion === e.id;
+                  return (
+                    <div key={e.id} className="pti-pat-card" style={{ borderLeft: isOpen ? `3px solid ${e.color}` : '3px solid transparent' }}>
+                      <div className="pti-pat-header" onClick={() => setExpandedEmotion(isOpen ? null : e.id)}>
+                        <span style={{ fontSize: 22 }}>{e.emoji}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{e.name}</div>
+                        </div>
+                        <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ fontSize: 16, color: 'var(--text-secondary)' }} aria-hidden="true" />
+                      </div>
+                      {isOpen && (
+                        <div className="pti-pat-body">
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: e.color, fontWeight: 700, marginBottom: 6 }}>
+                            Cuándo la siento
+                          </div>
+                          <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.65, marginBottom: 14, fontStyle: 'italic' }}>"{e.when}"</p>
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: e.color, fontWeight: 700, marginBottom: 8 }}>
+                            🧰 Herramientas de gestión
+                          </div>
+                          {e.tools.map((t, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-card)', lineHeight: 1.6, padding: '6px 0', borderTop: i === 0 ? 'none' : '1px solid var(--divider)' }}>
+                              <span style={{ color: e.color, flexShrink: 0, marginTop: 2 }}>→</span>
+                              <span>{t}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginTop: 8 }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 8 }}>
+                    Emoción más difícil de identificar
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.65 }}>
+                    🔒 <strong>Bloqueo emocional</strong> — me pongo una barrera y justifico que no tengo que gestionar las emociones igual que los demás.
+                  </p>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Pantalla Historial ── */
+    function HistorialScreen({ darkMode, setDarkMode }) {
+      const [registros, setRegistros] = useState([]);
+      const [loading, setLoading]     = useState(true);
+      const [expanded, setExpanded]   = useState(null);
+      const [confirmDelete, setConfirmDelete] = useState(null);
+
+      useEffect(() => {
+        (async () => {
+          setLoading(true);
+          const { data, error } = await db
+            .from('registros')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (!error && data) setRegistros(data);
+          setLoading(false);
+        })();
+      }, []);
+
+      const deleteRegistro = async (id) => {
+        await db.from('registros').delete().eq('id', id);
+        setRegistros(prev => prev.filter(r => r.id !== id));
+        setConfirmDelete(null);
+        setExpanded(null);
+      };
+
+      return (
+        <div className={`ej-root${darkMode ? '' : ' light'}`}>
+          <div className="ej-container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)' }}>Historial</h2>
+              <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+            </div>
+
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
+                Cargando…
+              </div>
+            )}
+
+            {!loading && registros.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>📭</div>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Aún no hay registros.</p>
+              </div>
+            )}
+
+            <div className="historial-list">
+              {registros.map(r => (
+                <div key={r.id} className="hist-card" style={{ marginBottom: 10 }}>
+                  <button onClick={() => setExpanded(expanded === r.id ? null : r.id)} style={{
+                    width: '100%', background: 'var(--card)', border: `1px solid ${expanded === r.id ? 'var(--ph-orange)' : 'var(--border)'}`,
+                    borderRadius: 14, padding: '14px 16px', cursor: 'pointer', textAlign: 'left',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                    borderLeft: `3px solid ${r.emotion_color || 'var(--ph-orange)'}`,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 22 }}>{r.emotion_emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{r.emotion_name}</span>
+                          <span style={{ fontSize: 11, color: r.emotion_color || 'var(--ph-orange)', fontWeight: 600 }}>{r.intensity}/10</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{formatDate(r.created_at)}</div>
+                        {(r.patterns_active?.length > 0 || r.values_selected?.length > 0) && (
+                          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                            {r.patterns_active?.length > 0 && <span>{r.patterns_active.join(' · ')}</span>}
+                            {r.patterns_active?.length > 0 && r.values_selected?.length > 0 && <span style={{ color: 'var(--text-secondary)' }}> — </span>}
+                            {r.values_selected?.length > 0 && <span style={{ color: 'var(--ph-orange)' }}>{r.values_selected.join(', ')}</span>}
+                          </div>
+                        )}
+                      </div>
+                      <i className={`ti ${expanded === r.id ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ fontSize: 16, color: 'var(--text-secondary)', flexShrink: 0 }} aria-hidden="true" />
+                    </div>
+                  </button>
+
+                  {expanded === r.id && (
+                    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 14px 14px', padding: '14px 16px' }}>
+                      {[['¿Qué pasó?', r.feeling_what], ['¿Qué generó?', r.feeling_generated], ['¿Cómo lo gestioné?', r.feeling_managed]].map(([label, val]) => val ? (
+                        <div key={label} style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 4 }}>{label}</div>
+                          <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.6, margin: 0 }}>{val}</p>
+                        </div>
+                      ) : null)}
+                      {r.verse_text && (
+                        <div style={{ borderTop: '1px solid var(--divider)', paddingTop: 12, marginTop: 4 }}>
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ph-orange)', marginBottom: 6 }}>{r.verse_reference}</div>
+                          <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text-verse)', lineHeight: 1.7, margin: '0 0 8px 0' }}>"{r.verse_text}"</p>
+                          {r.verse_words && <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{r.verse_words}</p>}
+                        </div>
+                      )}
+                      <button onClick={() => setConfirmDelete(r.id)} style={{
+                        marginTop: 14, padding: '8px 14px', background: 'transparent',
+                        border: '1px solid #E24B4A44', borderRadius: 8, color: '#E24B4A',
+                        fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+                      }}>🗑 Eliminar registro</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {confirmDelete && (
+              <div style={{ position: 'fixed', inset: 0, background: 'var(--modal-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 200 }}>
+                <div style={{ background: 'var(--modal-card)', border: '1px solid var(--border)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
+                  <p style={{ fontSize: 15, color: 'var(--text)', fontWeight: 500, marginBottom: 8 }}>¿Eliminar este registro?</p>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Esta acción no se puede deshacer.</p>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: 12, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, color: 'var(--text)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                    <button onClick={() => deleteRegistro(confirmDelete)} style={{ flex: 1, padding: 12, background: '#E24B4A', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ── App principal ── */
+    function App() {
+      const [darkMode, setDarkMode]             = useState(false);
+      const [activeTab, setActiveTab]           = useState('home');
+      const [step, setStep]                     = useState(1);
+      const [emotion, setEmotion]               = useState(null);
+      const [intensity, setIntensity]           = useState(null);
+      const [feelings, setFeelings]             = useState({ what: '', generated: '', managed: '' });
+      const [selectedPatterns, setSelectedPatterns] = useState([]);
+      const [activePatternTab, setActivePatternTab] = useState(0);
+      const [anchorValue, setAnchorValue]       = useState(null);
+      const [verse, setVerse]                   = useState(null);
+      const [loading, setLoading]               = useState(false);
+      const [error, setError]                   = useState(null);
+      const [saved, setSaved]                   = useState(false);
+
+      useEffect(() => {
+        const storedTheme = localStorage.getItem('ej_dark_mode');
+        if (storedTheme !== null) setDarkMode(storedTheme === 'true');
+      }, []);
+
+      useEffect(() => {
+        document.documentElement.classList.toggle('light', !darkMode);
+        document.body.classList.toggle('light', !darkMode);
+        document.querySelector('#root').classList.toggle('light', !darkMode);
+        localStorage.setItem('ej_dark_mode', darkMode);
+      }, [darkMode]);
+
+      const reset = () => {
+        setStep(1); setEmotion(null); setIntensity(null);
+        setFeelings({ what: '', generated: '', managed: '' });
+        setSelectedPatterns([]); setActivePatternTab(0);
+        setAnchorValue(null); setVerse(null);
+        setError(null); setLoading(false); setSaved(false);
+      };
+
+      const fetchVerse = async (current) => {
+        setLoading(true); setError(null); setVerse(null); setSaved(false);
+
+        const patternsText = current.patterns.length > 0
+          ? current.patterns.map(p => p.label).join(', ')
+          : 'ninguno identificado';
+
+        const anchorText = current.anchor
+          ? ALL_VALUES.find(v => v.id === current.anchor)?.label || current.anchor
+          : 'ninguno seleccionado';
+
+        const prompt = `Eres un guía cálido y cercano que acompaña a un hombre en proceso de recuperación personal. Usa siempre el género masculino. Esta persona acaba de registrar lo siguiente:
+
+EMOCIÓN: ${current.emotion.name}
+INTENSIDAD: ${current.intensity}/10
+¿QUÉ PASÓ?: ${current.feelings.what}
+¿QUÉ GENERÓ EN ÉL?: ${current.feelings.generated}
+¿CÓMO LO GESTIONÓ?: ${current.feelings.managed}
+PATRONES QUE RECONOCIÓ EN SÍ MISMO HOY: ${patternsText}
+VALOR ANCLA QUE ELIGIÓ: ${anchorText}
+
+Lee CON MUCHA ATENCIÓN lo que escribió. Elige UN versículo de la Biblia Reina-Valera 1960 (RV1960) que hable DIRECTAMENTE a SU situación concreta — no a la emoción genérica, sino a lo específico que vivió y los patrones que reconoció en sí mismo.
+
+Luego escribe una explicación "En otras palabras" de 2-3 frases que conecte el versículo con lo que esa persona escribió hoy, mencionando el valor ancla que eligió si es relevante. Tono cálido, cercano, sin tecnicismos religiosos, sin moralizar. Que se sienta visto, no juzgado. Háblale de tú.
+
+Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o después:
+{"versiculo":"texto exacto del versículo en RV1960","referencia":"Libro Capítulo:Versículo","palabras":"explicación cálida y personal"}`;
+
+        try {
+          const response = await fetch('/api/verse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt }),
+          });
+          const data = await response.json();
+          if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+          const text  = data.content.map(i => i.text || '').join('\n');
+          const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(clean);
+          setVerse(parsed);
+
+          const anchorLabel = current.anchor
+            ? ALL_VALUES.find(v => v.id === current.anchor)?.label || current.anchor
+            : null;
+
+          const baseRecord = {
+            emotion_name:      current.emotion.name,
+            emotion_emoji:     current.emotion.emoji,
+            emotion_color:     current.emotion.color,
+            intensity:         current.intensity,
+            feeling_what:      current.feelings.what,
+            feeling_generated: current.feelings.generated,
+            feeling_managed:   current.feelings.managed,
+            values_selected:   anchorLabel ? [anchorLabel] : [],
+            verse_text:        parsed.versiculo,
+            verse_reference:   parsed.referencia,
+            verse_words:       parsed.palabras,
+          };
+
+          const { error: dbError } = await db.from('registros').insert({
+            ...baseRecord,
+            patterns_active: current.patterns.map(p => p.label),
+          });
+
+          if (!dbError) {
+            setSaved(true);
+          } else {
+            const { error: dbError2 } = await db.from('registros').insert(baseRecord);
+            if (!dbError2) setSaved(true);
+            else console.error('Supabase error:', dbError2.message);
+          }
+
+        } catch (err) {
+          setError('No se pudo obtener el versículo. Inténtalo de nuevo.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleNext = () => {
+        if (step < 5) {
+          setStep(step + 1);
+        } else if (step === 5) {
+          setStep(6);
+          fetchVerse({ emotion, intensity, feelings, patterns: selectedPatterns, anchor: anchorValue });
+        }
+      };
+
+      const handleBack = () => {
+        if (step > 1 && step < 6) setStep(step - 1);
+      };
+
+      const suggestedValueIds = selectedPatterns.length > 0
+        ? [...new Set(selectedPatterns.flatMap(p => p.values))].slice(0, 4)
+        : [];
+      const otherValues = ALL_VALUES.filter(v => !suggestedValueIds.includes(v.id));
+      const suggestedValues = ALL_VALUES.filter(v => suggestedValueIds.includes(v.id));
+
+      const togglePattern = (p) => {
+        setSelectedPatterns(prev => {
+          if (prev.find(x => x.id === p.id)) return prev.filter(x => x.id !== p.id);
+          if (prev.length >= 3) return prev;
+          return [...prev, p];
+        });
+        setActivePatternTab(0);
+        setAnchorValue(null);
+      };
+
+      const canContinue = () => {
+        if (step === 1) return !!emotion;
+        if (step === 2) return intensity !== null;
+        if (step === 3) return feelings.what.trim() && feelings.generated.trim() && feelings.managed.trim();
+        if (step === 4) return true;
+        if (step === 5) return anchorValue !== null;
+        return true;
+      };
+
+      /* ── Renders de tabs ── */
+      if (activeTab === 'home') return (
+        <>
+          <HomeScreen setActiveTab={setActiveTab} darkMode={darkMode} setDarkMode={setDarkMode} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </>
+      );
+
+      if (activeTab === 'pti') return (
+        <>
+          <PTIScreen darkMode={darkMode} setDarkMode={setDarkMode} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </>
+      );
+
+      if (activeTab === 'historial') return (
+        <>
+          <HistorialScreen darkMode={darkMode} setDarkMode={setDarkMode} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </>
+      );
+
+      /* ── Tab Registro — flujo de 6 pasos ── */
+      const activeColor = emotion?.color || 'var(--ph-orange)';
+
+      return (
+        <>
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+          `}</style>
+
+          <div className={`ej-root${darkMode ? '' : ' light'}`} style={{ '--active-color': activeColor }}>
+            <div className="ej-container">
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>
+                  Paso {step} · {STEP_NAMES[step - 1]}
+                </div>
+                <button className="theme-toggle" onClick={() => setDarkMode(d => !d)} title={darkMode ? 'Modo claro' : 'Modo oscuro'}>
+                  {darkMode ? '☀️' : '🌙'}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
+                {[1,2,3,4,5,6].map(n => (
+                  <div key={n} style={{
+                    flex: 1, height: 4, borderRadius: 4,
+                    background: n <= step ? activeColor : 'var(--border)',
+                    transition: 'background 0.4s ease',
+                  }} />
+                ))}
+              </div>
+
+              <div key={step} className="ej-step">
+
+                {/* Paso 1 — Emoción */}
+                {step === 1 && (
+                  <>
+                    <h1 className="ej-serif" style={{ fontSize: 32, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 28px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
+                      {'¿Qué estás\nsintiendo?'}
+                    </h1>
+                    <div className="ej-grid2">
+                      {EMOTIONS.map(e => {
+                        const selected = emotion?.name === e.name;
+                        return (
+                          <button key={e.name} className="ej-btn"
+                            onClick={() => setEmotion(e)}
+                            style={{
+                              background: selected ? `${e.color}22` : 'var(--card)',
+                              border: `${selected ? 1.5 : 1}px solid ${selected ? e.color : 'var(--border)'}`,
+                              borderRadius: 16, padding: '18px 14px', textAlign: 'left',
+                              transition: 'all 0.4s ease', color: 'var(--text-card)',
+                            }}>
+                            <div style={{ fontSize: 28, transform: selected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.4s ease', transformOrigin: 'left center', display: 'inline-block', lineHeight: 1 }}>{e.emoji}</div>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-card)', marginTop: 10 }}>{e.name}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {/* Paso 2 — Intensidad */}
+                {step === 2 && (
+                  <>
+                    <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 28px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
+                      {'¿Con qué fuerza\nla sientes?'}
+                    </h1>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => {
+                        const selected = intensity === n;
+                        return (
+                          <button key={n} className="ej-btn"
+                            onClick={() => setIntensity(n)}
+                            style={{
+                              height: 52,
+                              background: selected ? activeColor : 'var(--card)',
+                              border: `1px solid ${selected ? activeColor : 'var(--border)'}`,
+                              borderRadius: 12, color: selected ? '#fff' : 'var(--num-off-text)',
+                              fontSize: 20, fontWeight: 600,
+                              transform: selected ? 'scale(1.05)' : 'scale(1)',
+                              transition: 'all 0.4s ease',
+                            }}>{n}</button>
+                        );
+                      })}
+                    </div>
+                    {intensity !== null && (
+                      <div style={{ marginTop: 22, textAlign: 'center' }}>
+                        <span style={{ display: 'inline-block', background: 'var(--card)', borderRadius: 20, padding: '8px 16px', fontSize: 12, color: activeColor, transition: 'color 0.4s ease' }}>{intensityLabel(intensity)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Paso 3 — Hoja de sentimiento */}
+                {step === 3 && (
+                  <>
+                    <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
+                      {'Hoja de\nsentimiento'}
+                    </h1>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
+                      Escribe sin filtros. Nadie más lo leerá.
+                    </p>
+                    {FEELING_FIELDS.map(f => (
+                      <div key={f.key} style={{ marginBottom: 18 }}>
+                        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 6 }}>{f.label}</div>
+                        <textarea className="ej-textarea" placeholder={f.placeholder}
+                          value={feelings[f.key]}
+                          onChange={e => setFeelings({ ...feelings, [f.key]: e.target.value })}
+                        />
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* Paso 4 — Patrón */}
+                {step === 4 && (
+                  <>
+                    <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', fontWeight: 400 }}>
+                      ¿Qué patrón<br />reconoces hoy?
+                    </h1>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
+                      Toca los que estuvieron activos. Puedes elegir hasta 3. Si no ves ninguno, continúa.
+                    </p>
+                    <div className="ej-grid2">
+                      {PATTERNS.map(p => {
+                        const isSel = selectedPatterns.find(x => x.id === p.id);
+                        const isDisabled = !isSel && selectedPatterns.length >= 3;
+                        return (
+                          <button key={p.id}
+                            className={`pat-card${isSel ? ' sel' : ''}`}
+                            disabled={isDisabled}
+                            onClick={() => togglePattern(p)}
+                            style={{
+                              background: isSel ? `${activeColor}1a` : 'var(--card)',
+                              border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : 'var(--border)'}`,
+                              opacity: isDisabled ? 0.35 : 1,
+                            }}>
+                            <span className="pat-emoji">{p.emoji}</span>
+                            <span className="pat-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 500 }}>
+                              {p.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedPatterns.length > 0 && (
+                      <div style={{ fontSize: 11, color: activeColor, textAlign: 'center', marginTop: 12 }}>
+                        {selectedPatterns.length} de 3 seleccionado{selectedPatterns.length > 1 ? 's' : ''}
+                      </div>
+                    )}
+                    {selectedPatterns.length === 0 && (
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center', marginTop: 12 }}>
+                        Puedes elegir hasta 3
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Paso 5 — Ancla */}
+                {step === 5 && (
+                  <>
+                    {selectedPatterns.length > 0 ? (
+                      <>
+                        {selectedPatterns.length > 1 && (
+                          <div className="pti-tabs" style={{ margin: '0 -20px 16px', padding: '0 20px' }}>
+                            {selectedPatterns.map((p, i) => (
+                              <button key={p.id}
+                                className={`pti-tab${activePatternTab === i ? ' active' : ''}`}
+                                style={activePatternTab === i ? { background: activeColor, borderColor: activeColor } : {}}
+                                onClick={() => setActivePatternTab(i)}>
+                                {p.emoji} {p.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {(() => {
+                          const p = selectedPatterns[activePatternTab] || selectedPatterns[0];
+                          return (
+                            <>
+                              {selectedPatterns.length === 1 && (
+                                <h1 className="ej-serif" style={{ fontSize: 24, color: 'var(--text)', lineHeight: 1.15, margin: '0 0 16px 0', fontWeight: 400 }}>
+                                  {p.emoji} {p.label}
+                                </h1>
+                              )}
+                              <div className="pti-card" style={{ borderTop: `3px solid ${activeColor}` }}>
+                                <div className="pti-header">
+                                  <div className="pti-title" style={{ color: activeColor }}>🧰 Tu herramienta de trabajo</div>
+                                  <div className="pti-desc">{p.desc}</div>
+                                </div>
+                                <div className="pti-tools">
+                                  {p.tools.map((t, i) => (
+                                    <div key={i} className="pti-tool">
+                                      <span className="pti-arrow" style={{ color: activeColor }}>→</span>
+                                      <span>{t}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="reflex-card" style={{ borderLeft: `3px solid ${activeColor}` }}>
+                                <div className="reflex-label" style={{ color: activeColor }}>Reflexiona antes de continuar</div>
+                                <div className="reflex-q">
+                                  {selectedPatterns.length === 1 ? p.q : '¿Cuál de estos patrones tuvo más peso hoy? ¿Qué tienen en común?'}
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+
+                        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, fontWeight: 600, marginBottom: 10 }}>
+                          Tu ancla — ¿con qué valor respondes?
+                        </div>
+                        <div className="ej-grid2" style={{ marginBottom: 8 }}>
+                          {suggestedValues.map(v => {
+                            const isSel = anchorValue === v.id;
+                            return (
+                              <button key={v.id} className={`val-card${isSel ? ' sel' : ''}`}
+                                onClick={() => setAnchorValue(isSel ? null : v.id)}
+                                style={{
+                                  background: isSel ? `${activeColor}1a` : 'var(--card)',
+                                  border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : activeColor + '55'}`,
+                                }}>
+                                <span className="val-emoji">{v.emoji}</span>
+                                <span className="val-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 400 }}>{v.label}</span>
+                                <span className="val-check" style={{ color: activeColor }}>✓</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {otherValues.length > 0 && (
+                          <>
+                            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: '12px 0 8px' }}>
+                              Otros valores
+                            </div>
+                            <div className="ej-grid2">
+                              {otherValues.map(v => {
+                                const isSel = anchorValue === v.id;
+                                return (
+                                  <button key={v.id} className={`val-card${isSel ? ' sel' : ''}`}
+                                    onClick={() => setAnchorValue(isSel ? null : v.id)}
+                                    style={{
+                                      background: isSel ? `${activeColor}1a` : 'var(--card)',
+                                      border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : 'var(--border)'}`,
+                                    }}>
+                                    <span className="val-emoji">{v.emoji}</span>
+                                    <span className="val-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 400 }}>{v.label}</span>
+                                    <span className="val-check" style={{ color: activeColor }}>✓</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', fontWeight: 400 }}>
+                          Tu ancla<br />de hoy
+                        </h1>
+                        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
+                          ¿Con qué valor quieres responder a lo que viviste?
+                        </p>
+                        <div className="ej-grid2">
+                          {ALL_VALUES.map(v => {
+                            const isSel = anchorValue === v.id;
+                            return (
+                              <button key={v.id} className={`val-card${isSel ? ' sel' : ''}`}
+                                onClick={() => setAnchorValue(isSel ? null : v.id)}
+                                style={{
+                                  background: isSel ? `${activeColor}1a` : 'var(--card)',
+                                  border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : 'var(--border)'}`,
+                                }}>
+                                <span className="val-emoji">{v.emoji}</span>
+                                <span className="val-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 400 }}>{v.label}</span>
+                                <span className="val-check" style={{ color: activeColor }}>✓</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+
+                {/* Paso 6 — Versículo */}
+                {step === 6 && (
+                  <>
+                    {loading && (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 0' }}>
+                        <div className="ej-pulse" style={{ fontSize: 48, lineHeight: 1 }}>📖</div>
+                        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 20 }}>Buscando versículo en RV1960...</p>
+                      </div>
+                    )}
+
+                    {error && !loading && (
+                      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
+                        <p style={{ color: '#E24B4A', fontSize: 14, margin: '0 0 16px 0' }}>{error}</p>
+                        <button className="ej-btn"
+                          onClick={() => fetchVerse({ emotion, intensity, feelings, patterns: selectedPatterns, anchor: anchorValue })}
+                          style={{ padding: '12px 24px', background: activeColor, color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600 }}>
+                          Reintentar
+                        </button>
+                      </div>
+                    )}
+
+                    {verse && !loading && (
+                      <>
+                        <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 24, lineHeight: 1 }}>{emotion.emoji}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span>{emotion.name}</span>
+                              <span style={{ fontSize: 11, color: activeColor, fontWeight: 600 }}>{intensity}/10</span>
+                            </div>
+                            {selectedPatterns.length > 0 && (
+                              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                                {selectedPatterns.map(p => p.label).join(' · ')}
+                              </div>
+                            )}
+                            {anchorValue && (
+                              <div style={{ fontSize: 11, color: activeColor, marginTop: 2 }}>
+                                Ancla: {ALL_VALUES.find(v => v.id === anchorValue)?.emoji} {ALL_VALUES.find(v => v.id === anchorValue)?.label}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ background: 'var(--card)', borderRadius: 16, padding: 20, border: `1px solid var(--border)`, borderLeft: `3px solid ${activeColor}` }}>
+                          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, marginBottom: 14, fontWeight: 500 }}>
+                            {verse.referencia}
+                          </div>
+                          <p className="ej-serif" style={{ fontSize: 16, color: 'var(--text)', fontStyle: 'italic', lineHeight: 1.75, margin: 0 }}>
+                            {verse.versiculo}
+                          </p>
+                          <div style={{ height: 1, background: 'var(--divider)', margin: '20px 0' }} />
+                          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, marginBottom: 10, fontWeight: 500 }}>
+                            En otras palabras
+                          </div>
+                          <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.7, margin: 0 }}>
+                            {verse.palabras}
+                          </p>
+                        </div>
+
+                        {selectedPatterns.length > 0 && (() => {
+                          const p = selectedPatterns[0];
+                          return (
+                            <div style={{ background: 'var(--card)', borderRadius: 14, padding: 16, border: `1px solid var(--border)`, borderLeft: `3px solid ${activeColor}`, marginTop: 12 }}>
+                              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, fontWeight: 700, marginBottom: 8 }}>
+                                🧰 Recuerda tu herramienta · {p.label}
+                              </div>
+                              <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.65, margin: 0 }}>
+                                {p.tools[0]}
+                              </p>
+                            </div>
+                          );
+                        })()}
+
+                        <div style={{ background: `${activeColor}18`, border: `1px solid ${activeColor}35`, borderRadius: 10, padding: 12, marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, color: activeColor, fontSize: 13, fontWeight: 500 }}>
+                          <span>✓</span>
+                          <span>Registro completado{saved ? ' y guardado' : ''}</span>
+                          {saved && (
+                            <button className="ej-btn" onClick={() => setActiveTab('historial')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: activeColor, fontSize: 12, padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>
+                              Ver historial
+                            </button>
+                          )}
+                        </div>
+
+                        {navigator.share && (
+                          <button className="ej-btn" onClick={async () => {
+                            const anchorLabel = anchorValue ? ALL_VALUES.find(v => v.id === anchorValue)?.label : null;
+                            const patternsLabel = selectedPatterns.map(p => p.label).join(', ');
+                            try {
+                              await navigator.share({
+                                title: 'Hoja de sentimiento',
+                                text: `${emotion.emoji} ${emotion.name} · ${intensity}/10\n${patternsLabel ? `Patrón: ${patternsLabel}\n` : ''}${anchorLabel ? `Ancla: ${anchorLabel}\n` : ''}\n¿Qué pasó?\n${feelings.what}\n\n¿Qué generó?\n${feelings.generated}\n\n¿Cómo lo gestioné?\n${feelings.managed}\n\n${verse.referencia}\n"${verse.versiculo}"`,
+                              });
+                            } catch(e) {}
+                          }} style={{ width: '100%', marginTop: 10, padding: '13px 0', background: 'transparent', border: `1px solid ${activeColor}50`, borderRadius: 14, color: activeColor, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            <span>↗</span> Compartir hoja
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div style={{ marginTop: 28, display: 'flex', gap: 10 }}>
+                {step > 1 && step < 6 && (
+                  <button className="ej-btn" onClick={handleBack} style={{ padding: '15px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
+                    Atrás
+                  </button>
+                )}
+                {step < 6 && (
+                  <button className="ej-btn ej-main" disabled={!canContinue()} onClick={handleNext} style={{ flex: 1, padding: 15, borderRadius: 14, fontSize: 15, fontWeight: 600, background: canContinue() ? activeColor : 'var(--btn-off-bg)', color: canContinue() ? '#fff' : 'var(--btn-off-text)', border: 'none' }}>
+                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrón' : step === 5 ? 'Recibir versículo' : 'Continuar'}
+                  </button>
+                )}
+                {step === 6 && !loading && verse && (
+                  <button className="ej-btn" onClick={reset} style={{ flex: 1, padding: 15, background: 'transparent', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
+                    Nuevo registro
+                  </button>
+                )}
+              </div>
+
+            </div>
+          </div>
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
