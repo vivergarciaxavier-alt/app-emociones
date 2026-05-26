@@ -1177,26 +1177,61 @@
         }, 400);
       };
 
-      const handleShare = () => {
+      const difStr = (est, real) => {
+        const d = real - est;
+        return d === 0 ? '±0€' : (d > 0 ? `+${fmt(d)}€` : `${fmt(d)}€`);
+      };
+
+      const handleShareClosed = async () => {
+        const ingRows = INGRESOS_KEYS.filter(({key}) => ingresos[key].est || ingresos[key].real);
+        const gasRows = GASTOS_KEYS.filter(({key}) => gastos[key].est || gastos[key].real);
         const lines = [
-          `📊 PRESUPUESTO MENSUAL — ${MESES[mes-1].toUpperCase()} ${anio}`,
-          '',
-          '📥 INGRESOS',
-          ...INGRESOS_KEYS.map(({key, label}) =>
-            `• ${label}: real ${ingresos[key].real || 0}€ / est. ${ingresos[key].est || 0}€`
-          ),
-          `TOTAL INGRESOS: ${fmt(totalIngReal)}€ real / ${fmt(totalIngEst)}€ est.`,
-          '',
-          '📤 GASTOS',
-          ...GASTOS_KEYS.map(({key, label}) =>
-            `• ${label}: real ${gastos[key].real || 0}€ / est. ${gastos[key].est || 0}€`
-          ),
-          `TOTAL GASTOS: ${fmt(totalGasReal)}€ real / ${fmt(totalGasEst)}€ est.`,
-          '',
-          `💧 FLUJO NETO: ${fmt(flujoReal)}€ real / ${fmt(flujoEst)}€ est.`,
+          `📊 PRESUPUESTO · Projecte Home`,
+          `${MESES[mes-1]} ${anio} — Cierre mensual`,
+          ``,
+          `📥 INGRESOS`,
+          ...ingRows.map(({key, label}) => {
+            const est = parseFloat(ingresos[key].est) || 0;
+            const real = parseFloat(ingresos[key].real) || 0;
+            return `${label}: ${fmt(est)}€ est / ${fmt(real)}€ real / ${difStr(est, real)}`;
+          }),
+          `Total: ${fmt(totalIngEst)}€ est / ${fmt(totalIngReal)}€ real / ${difStr(totalIngEst, totalIngReal)}`,
+          ``,
+          `📤 GASTOS`,
+          ...gasRows.map(({key, label}) => {
+            const est = parseFloat(gastos[key].est) || 0;
+            const real = parseFloat(gastos[key].real) || 0;
+            return `${label}: ${fmt(est)}€ est / ${fmt(real)}€ real / ${difStr(est, real)}`;
+          }),
+          `Total: ${fmt(totalGasEst)}€ est / ${fmt(totalGasReal)}€ real / ${difStr(totalGasEst, totalGasReal)}`,
+          ``,
+          `💧 Flujo neto: ${fmt(flujoEst)}€ est / ${fmt(flujoReal)}€ real / ${difStr(flujoEst, flujoReal)}`,
         ];
-        const text = encodeURIComponent(lines.join('\n'));
-        window.open(`https://wa.me/?text=${text}`, '_blank');
+        try {
+          await navigator.share({ title: `Cierre ${MESES[mes-1]} ${anio}`, text: lines.join('\n') });
+        } catch(e) {}
+      };
+
+      const handleShareEstimated = async () => {
+        const ingRows = INGRESOS_KEYS.filter(({key}) => ingresos[key].est);
+        const gasRows = GASTOS_KEYS.filter(({key}) => gastos[key].est);
+        const lines = [
+          `📋 PRESUPUESTO · Projecte Home`,
+          `${MESES[mes-1]} ${anio} — Estimado`,
+          ``,
+          `📥 INGRESOS`,
+          ...ingRows.map(({key, label}) => `${label}: ${fmt(parseFloat(ingresos[key].est) || 0)}€`),
+          `Total: ${fmt(totalIngEst)}€`,
+          ``,
+          `📤 GASTOS`,
+          ...gasRows.map(({key, label}) => `${label}: ${fmt(parseFloat(gastos[key].est) || 0)}€`),
+          `Total: ${fmt(totalGasEst)}€`,
+          ``,
+          `💧 Flujo neto: ${fmt(flujoEst)}€`,
+        ];
+        try {
+          await navigator.share({ title: `Estimado ${MESES[mes-1]} ${anio}`, text: lines.join('\n') });
+        } catch(e) {}
       };
 
       const inputStyle = {
@@ -1304,12 +1339,19 @@
               }}>
                 {saving ? 'Guardando…' : saved ? '✓ Guardado' : '💾 Guardar'}
               </button>
-              <button onClick={handleShare} style={{
-                flex: 1, padding: '13px 0', background: '#25D366',
+              <button onClick={handleShareClosed} style={{
+                flex: 1, padding: '13px 0', background: 'var(--ph-orange)',
                 border: 'none', borderRadius: 14, color: '#fff',
-                fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
               }}>
-                📲 Enviar WA
+                📤 Mes cerrado
+              </button>
+              <button onClick={handleShareEstimated} style={{
+                flex: 1, padding: '13px 0', background: 'var(--ph-navy)',
+                border: 'none', borderRadius: 14, color: '#fff',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}>
+                📋 Estimado
               </button>
             </div>
 
