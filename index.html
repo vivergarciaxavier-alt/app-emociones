@@ -1670,7 +1670,21 @@
                             try {
                               await navigator.share({
                                 title: 'Hoja de sentimiento',
-                                text: `${emotion.emoji} ${emotion.name} · ${intensity}/10\n${patternsLabel ? `Patrón: ${patternsLabel}\n` : ''}\n¿Qué pasó?\n${feelings.what}\n\n¿Qué generó?\n${feelings.generated}\n\n¿Cómo lo gestioné?\n${feelings.managed}`,
+                                text: [
+                                  `${emotion.emoji} ${emotion.name.toUpperCase()} · ${intensity}/10`,
+                                  patternsLabel ? `Patrón: ${patternsLabel}` : null,
+                                  ``,
+                                  `¿Qué pasó?`,
+                                  feelings.what,
+                                  ``,
+                                  `¿Qué generó en mí?`,
+                                  feelings.generated,
+                                  ``,
+                                  `¿Cómo lo gestioné?`,
+                                  feelings.managed,
+                                  ``,
+                                  `— Hoja de sentimiento · Projecte Home`,
+                                ].filter(l => l !== null).join('\n'),
                               });
                             } catch(e) {}
                           }} style={{ width: '100%', marginTop: 10, padding: '13px 0', background: 'transparent', border: `1px solid ${activeColor}50`, borderRadius: 14, color: activeColor, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
