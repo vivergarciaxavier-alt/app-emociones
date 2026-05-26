@@ -23,7 +23,7 @@
     html, body { background: var(--bg); transition: background 0.3s ease; }
     body { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
 
-    /* ── Tokens — modo oscuro (defecto) ── */
+    /* ââ Tokens â modo oscuro (defecto) ââ */
     :root {
       --bg:              #0e1a26;
       --card:            #172331;
@@ -49,7 +49,7 @@
       --ph-soft-border:  #5a3020;
     }
 
-    /* ── Tokens — modo claro ── */
+    /* ââ Tokens â modo claro ââ */
     .light {
       --bg:              #faf7f4;
       --card:            #ffffff;
@@ -297,104 +297,104 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
-    /* ── Supabase ── */
+    /* ââ Supabase ââ */
     const SUPABASE_URL = 'https://kqhsgmvsxdyyhpcqwzwr.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_qOWZbgkBMN4WYDf_9cCKDg_70dHawLR';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    /* ── Datos ── */
+    /* ââ Datos ââ */
     const EMOTIONS = [
-      { name: 'Culpa',             emoji: '😶', color: '#E24B4A' },
-      { name: 'Vergüenza',         emoji: '🙈', color: '#C97B1A' },
-      { name: 'Tristeza',          emoji: '💧', color: '#4A9EE0' },
-      { name: 'Rabia',             emoji: '🔥', color: '#E05A28' },
-      { name: 'Ansiedad',          emoji: '⚡', color: '#F0A500' },
-      { name: 'Miedo',             emoji: '🌑', color: '#8B7FE8' },
-      { name: 'Bloqueo emocional', emoji: '🔒', color: '#6B7280' },
-      { name: 'Alegría',           emoji: '☀️', color: '#6BAA28' },
-      { name: 'Serenidad',         emoji: '🌿', color: '#1DB87A' },
-      { name: 'Gratitud',          emoji: '🤍', color: '#E05890' },
+      { name: 'Culpa',             emoji: 'ð¶', color: '#E24B4A' },
+      { name: 'VergÃ¼enza',         emoji: 'ð', color: '#C97B1A' },
+      { name: 'Tristeza',          emoji: 'ð§', color: '#4A9EE0' },
+      { name: 'Rabia',             emoji: 'ð¥', color: '#E05A28' },
+      { name: 'Ansiedad',          emoji: 'â¡', color: '#F0A500' },
+      { name: 'Miedo',             emoji: 'ð', color: '#8B7FE8' },
+      { name: 'Bloqueo emocional', emoji: 'ð', color: '#6B7280' },
+      { name: 'AlegrÃ­a',           emoji: 'âï¸', color: '#6BAA28' },
+      { name: 'Serenidad',         emoji: 'ð¿', color: '#1DB87A' },
+      { name: 'Gratitud',          emoji: 'ð¤', color: '#E05890' },
     ];
 
     const PATTERNS = [
-      { id: 'impulsividad', emoji: '⚡', label: 'Impulsividad',
-        desc: 'Actuaste sin pensar en las consecuencias. La emoción fue más rápida que tu capacidad de parar.',
-        tools: ['Detecta tus señales físicas antes de explotar: mandíbula tensa, pecho apretado, respiración rápida.', 'Para. Cuenta hasta 10. No improvises la respuesta.', '¿Qué perderé si actúo ahora desde este lugar?'],
+      { id: 'impulsividad', emoji: 'â¡', label: 'Impulsividad',
+        desc: 'Actuaste sin pensar en las consecuencias. La emociÃ³n fue mÃ¡s rÃ¡pida que tu capacidad de parar.',
+        tools: ['Detecta tus seÃ±ales fÃ­sicas antes de explotar: mandÃ­bula tensa, pecho apretado, respiraciÃ³n rÃ¡pida.', 'Para. Cuenta hasta 10. No improvises la respuesta.', 'Â¿QuÃ© perderÃ© si actÃºo ahora desde este lugar?'],
         values: ['constancia', 'sobriedad', 'responsabilidad'],
-        q: '¿En qué momento podrías haber hecho una pausa hoy? ¿Qué señal te lo indicaba?' },
-      { id: 'extremismo', emoji: '🔴', label: 'Extremismo',
-        desc: 'Todo o nada. La escala de grises desaparece y eso genera decisiones más intensas de lo necesario.',
-        tools: ['Puntúa la situación del 1 al 10. ¿Realmente es un 10?', '¿Qué haría alguien equilibrado en este momento?', 'Observa si usas palabras absolutas: "siempre", "nunca", "todo", "nada".'],
+        q: 'Â¿En quÃ© momento podrÃ­as haber hecho una pausa hoy? Â¿QuÃ© seÃ±al te lo indicaba?' },
+      { id: 'extremismo', emoji: 'ð´', label: 'Extremismo',
+        desc: 'Todo o nada. La escala de grises desaparece y eso genera decisiones mÃ¡s intensas de lo necesario.',
+        tools: ['PuntÃºa la situaciÃ³n del 1 al 10. Â¿Realmente es un 10?', 'Â¿QuÃ© harÃ­a alguien equilibrado en este momento?', 'Observa si usas palabras absolutas: "siempre", "nunca", "todo", "nada".'],
         values: ['constancia', 'respeto', 'crecimiento'],
-        q: '¿Qué habría cambiado si hubieras visto esto como un 6 en lugar de un 10?' },
-      { id: 'agradador', emoji: '🤝', label: 'Agradador',
-        desc: 'Pusiste el bienestar de los demás por delante del tuyo sin mirar lo que tú necesitabas.',
-        tools: ['Identifica qué necesitabas tú antes de pensar en los demás.', 'Di lo que piensas realmente, aunque no sea lo que quieren escuchar.', 'Poner tus necesidades no es egoísmo — es autocuidado.'],
+        q: 'Â¿QuÃ© habrÃ­a cambiado si hubieras visto esto como un 6 en lugar de un 10?' },
+      { id: 'agradador', emoji: 'ð¤', label: 'Agradador',
+        desc: 'Pusiste el bienestar de los demÃ¡s por delante del tuyo sin mirar lo que tÃº necesitabas.',
+        tools: ['Identifica quÃ© necesitabas tÃº antes de pensar en los demÃ¡s.', 'Di lo que piensas realmente, aunque no sea lo que quieren escuchar.', 'Poner tus necesidades no es egoÃ­smo â es autocuidado.'],
         values: ['honestidad', 'integridad', 'autocuidado'],
-        q: '¿Qué necesitabas tú realmente, más allá de lo que esperaban los demás?' },
-      { id: 'limites', emoji: '🚫', label: 'Sin límites',
-        desc: 'Te costó decir que no, o los pusiste demasiado tarde cuando la situación ya se desbordó.',
-        tools: ['¿En qué momento concreto debías haber dicho que no?', 'Practica el no en situaciones pequeñas del día a día.', 'Poner límites no daña al otro — es respetarte a ti mismo.'],
+        q: 'Â¿QuÃ© necesitabas tÃº realmente, mÃ¡s allÃ¡ de lo que esperaban los demÃ¡s?' },
+      { id: 'limites', emoji: 'ð«', label: 'Sin lÃ­mites',
+        desc: 'Te costÃ³ decir que no, o los pusiste demasiado tarde cuando la situaciÃ³n ya se desbordÃ³.',
+        tools: ['Â¿En quÃ© momento concreto debÃ­as haber dicho que no?', 'Practica el no en situaciones pequeÃ±as del dÃ­a a dÃ­a.', 'Poner lÃ­mites no daÃ±a al otro â es respetarte a ti mismo.'],
         values: ['integridad', 'respeto', 'autocuidado'],
-        q: '¿En qué momento concreto debías haber dicho que no? ¿Qué te lo impidió?' },
-      { id: 'constancia', emoji: '🔄', label: 'Constancia',
-        desc: 'Empezaste con mucha motivación pero el ritmo no se mantuvo.',
-        tools: ['Divide el objetivo en pasos tan pequeños que sean imposibles de fallar.', 'Un día a la vez. No pienses en la semana entera.', 'Reconoce cualquier avance, por pequeño que sea.'],
+        q: 'Â¿En quÃ© momento concreto debÃ­as haber dicho que no? Â¿QuÃ© te lo impidiÃ³?' },
+      { id: 'constancia', emoji: 'ð', label: 'Constancia',
+        desc: 'Empezaste con mucha motivaciÃ³n pero el ritmo no se mantuvo.',
+        tools: ['Divide el objetivo en pasos tan pequeÃ±os que sean imposibles de fallar.', 'Un dÃ­a a la vez. No pienses en la semana entera.', 'Reconoce cualquier avance, por pequeÃ±o que sea.'],
         values: ['constancia', 'responsabilidad', 'crecimiento'],
-        q: '¿Cuál es el paso más pequeño que sí puedes cumplir mañana sin falta?' },
-      { id: 'inseguridad', emoji: '🔒', label: 'Inseguridad',
-        desc: 'Te costó confiar en tu propio criterio. Buscaste validación externa o evitaste tomar postura.',
-        tools: ['Analiza la situación desde tu criterio real antes de buscar la opinión de otros.', 'Recuerda evidencias concretas de veces que actuaste bien — son datos reales.', 'Confía en el análisis, no en el miedo.'],
+        q: 'Â¿CuÃ¡l es el paso mÃ¡s pequeÃ±o que sÃ­ puedes cumplir maÃ±ana sin falta?' },
+      { id: 'inseguridad', emoji: 'ð', label: 'Inseguridad',
+        desc: 'Te costÃ³ confiar en tu propio criterio. Buscaste validaciÃ³n externa o evitaste tomar postura.',
+        tools: ['Analiza la situaciÃ³n desde tu criterio real antes de buscar la opiniÃ³n de otros.', 'Recuerda evidencias concretas de veces que actuaste bien â son datos reales.', 'ConfÃ­a en el anÃ¡lisis, no en el miedo.'],
         values: ['autocuidado', 'crecimiento', 'constancia'],
-        q: '¿Qué evidencia concreta tienes de que tu criterio en esta situación es válido?' },
-      { id: 'impaciencia', emoji: '⏳', label: 'Impaciencia',
-        desc: 'Las cosas no iban al ritmo que querías y eso generó tensión o decisiones precipitadas.',
-        tools: ['Para antes de querer acelerar. ¿Qué pierdo realmente si espero?', 'Los procesos tienen su tiempo — incluido el tuyo.', '¿Esta impaciencia viene de ansiedad o de necesidad de control?'],
+        q: 'Â¿QuÃ© evidencia concreta tienes de que tu criterio en esta situaciÃ³n es vÃ¡lido?' },
+      { id: 'impaciencia', emoji: 'â³', label: 'Impaciencia',
+        desc: 'Las cosas no iban al ritmo que querÃ­as y eso generÃ³ tensiÃ³n o decisiones precipitadas.',
+        tools: ['Para antes de querer acelerar. Â¿QuÃ© pierdo realmente si espero?', 'Los procesos tienen su tiempo â incluido el tuyo.', 'Â¿Esta impaciencia viene de ansiedad o de necesidad de control?'],
         values: ['constancia', 'sobriedad', 'respeto'],
-        q: '¿De dónde viene realmente esta prisa — ansiedad, control, o miedo a algo?' },
-      { id: 'autoestima', emoji: '💭', label: 'Autoestima',
-        desc: 'Te sentiste insuficiente o te comparaste con otros de una forma que no le permitirías a nadie.',
-        tools: ['Revisa cómo te estás hablando. ¿Le dirías eso a alguien que quieres?', 'El único punto de comparación válido eres tú de ayer.', 'Anota algo concreto que hiciste bien hoy, por pequeño que sea.'],
+        q: 'Â¿De dÃ³nde viene realmente esta prisa â ansiedad, control, o miedo a algo?' },
+      { id: 'autoestima', emoji: 'ð­', label: 'Autoestima',
+        desc: 'Te sentiste insuficiente o te comparaste con otros de una forma que no le permitirÃ­as a nadie.',
+        tools: ['Revisa cÃ³mo te estÃ¡s hablando. Â¿Le dirÃ­as eso a alguien que quieres?', 'El Ãºnico punto de comparaciÃ³n vÃ¡lido eres tÃº de ayer.', 'Anota algo concreto que hiciste bien hoy, por pequeÃ±o que sea.'],
         values: ['autocuidado', 'crecimiento', 'honestidad'],
-        q: '¿Qué le dirías a alguien que quieres si estuviera viviendo exactamente lo que tú viviste hoy?' },
-      { id: 'incoherencia', emoji: '🎭', label: 'Incoherencia',
-        desc: 'Hubo diferencia entre lo que dijiste que harías y lo que hiciste.',
-        tools: ['Identifica el momento exacto donde la acción se separó de la intención.', 'Comprométete solo con lo que puedes cumplir.', 'Busca el porqué — a veces es miedo, a veces es evitación.'],
+        q: 'Â¿QuÃ© le dirÃ­as a alguien que quieres si estuviera viviendo exactamente lo que tÃº viviste hoy?' },
+      { id: 'incoherencia', emoji: 'ð­', label: 'Incoherencia',
+        desc: 'Hubo diferencia entre lo que dijiste que harÃ­as y lo que hiciste.',
+        tools: ['Identifica el momento exacto donde la acciÃ³n se separÃ³ de la intenciÃ³n.', 'CompromÃ©tete solo con lo que puedes cumplir.', 'Busca el porquÃ© â a veces es miedo, a veces es evitaciÃ³n.'],
         values: ['honestidad', 'integridad', 'responsabilidad'],
-        q: '¿Qué diferencia hay entre lo que dijiste y lo que hiciste? ¿Qué lo explica?' },
-      { id: 'humildad', emoji: '👑', label: 'Humildad',
-        desc: 'Tu visión estuvo por encima de la de los demás. Costó dar la razón o reconocer un límite propio.',
-        tools: ['Practica el "no sé". Permite no tener siempre la respuesta.', 'Cuando alguien diga algo válido, reconóceselo antes de añadir tu perspectiva.', '¿Qué puedo aprender de cómo lo ve el otro?'],
+        q: 'Â¿QuÃ© diferencia hay entre lo que dijiste y lo que hiciste? Â¿QuÃ© lo explica?' },
+      { id: 'humildad', emoji: 'ð', label: 'Humildad',
+        desc: 'Tu visiÃ³n estuvo por encima de la de los demÃ¡s. CostÃ³ dar la razÃ³n o reconocer un lÃ­mite propio.',
+        tools: ['Practica el "no sÃ©". Permite no tener siempre la respuesta.', 'Cuando alguien diga algo vÃ¡lido, reconÃ³ceselo antes de aÃ±adir tu perspectiva.', 'Â¿QuÃ© puedo aprender de cÃ³mo lo ve el otro?'],
         values: ['respeto', 'honestidad', 'curiosidad'],
-        q: '¿Qué podrías aprender de la perspectiva de la otra persona en esta situación?' },
+        q: 'Â¿QuÃ© podrÃ­as aprender de la perspectiva de la otra persona en esta situaciÃ³n?' },
     ];
 
     const ALL_VALUES = [
-      { id: 'constancia',      label: 'Constancia',      emoji: '🔁' },
-      { id: 'sobriedad',       label: 'Sobriedad',        emoji: '🧘' },
-      { id: 'honestidad',      label: 'Honestidad',       emoji: '💬' },
-      { id: 'integridad',      label: 'Integridad',       emoji: '⚖️' },
-      { id: 'responsabilidad', label: 'Responsabilidad',  emoji: '🎯' },
-      { id: 'familia',         label: 'Familia',          emoji: '🏠' },
-      { id: 'curiosidad',      label: 'Curiosidad',       emoji: '🔍' },
-      { id: 'crecimiento',     label: 'Crecimiento',      emoji: '🌱' },
-      { id: 'respeto',         label: 'Respeto',          emoji: '🤲' },
-      { id: 'autocuidado',     label: 'Autocuidado',      emoji: '❤️' },
+      { id: 'constancia',      label: 'Constancia',      emoji: 'ð' },
+      { id: 'sobriedad',       label: 'Sobriedad',        emoji: 'ð§' },
+      { id: 'honestidad',      label: 'Honestidad',       emoji: 'ð¬' },
+      { id: 'integridad',      label: 'Integridad',       emoji: 'âï¸' },
+      { id: 'responsabilidad', label: 'Responsabilidad',  emoji: 'ð¯' },
+      { id: 'familia',         label: 'Familia',          emoji: 'ð ' },
+      { id: 'curiosidad',      label: 'Curiosidad',       emoji: 'ð' },
+      { id: 'crecimiento',     label: 'Crecimiento',      emoji: 'ð±' },
+      { id: 'respeto',         label: 'Respeto',          emoji: 'ð¤²' },
+      { id: 'autocuidado',     label: 'Autocuidado',      emoji: 'â¤ï¸' },
     ];
 
     const FRASES_MOTIVACIONALES = [
-      { texto: 'Estoy construyendo una persona nueva. Una persona de la que esté orgulloso — y de la que esté orgullosa mi familia.', icono: '🌱' },
-      { texto: 'Hago lo que me propongo aunque no tenga ganas.', icono: '🔁' },
-      { texto: 'Cada día mejor que ayer. Sin excepciones.', icono: '📈' },
-      { texto: 'Mi palabra vale. Soy un hombre de palabra.', icono: '🤝' },
-      { texto: 'Me hago cargo sin excusas.', icono: '🎯' },
-      { texto: 'No me dejo pisar, pero nunca piso a nadie.', icono: '⚖️' },
-      { texto: 'Me pongo primero sin culpa. Cuidarme es cuidar a los que quiero.', icono: '❤️' },
-      { texto: 'Familia es prioridad real, no solo de palabra.', icono: '🏠' },
-      { texto: 'Cero alcohol, cero drogas, cero tabaco. Cada día que pasa es una victoria.', icono: '🧘' },
-      { texto: 'Digo lo que pienso. No me miento.', icono: '💬' },
-      { texto: 'Aprendo algo nuevo cada día. La curiosidad me hace crecer.', icono: '🔍' },
-      { texto: 'Construyo una vida que realmente me apetezca vivir.', icono: '✨' },
+      { texto: 'Estoy construyendo una persona nueva. Una persona de la que estÃ© orgulloso â y de la que estÃ© orgullosa mi familia.', icono: 'ð±' },
+      { texto: 'Hago lo que me propongo aunque no tenga ganas.', icono: 'ð' },
+      { texto: 'Cada dÃ­a mejor que ayer. Sin excepciones.', icono: 'ð' },
+      { texto: 'Mi palabra vale. Soy un hombre de palabra.', icono: 'ð¤' },
+      { texto: 'Me hago cargo sin excusas.', icono: 'ð¯' },
+      { texto: 'No me dejo pisar, pero nunca piso a nadie.', icono: 'âï¸' },
+      { texto: 'Me pongo primero sin culpa. Cuidarme es cuidar a los que quiero.', icono: 'â¤ï¸' },
+      { texto: 'Familia es prioridad real, no solo de palabra.', icono: 'ð ' },
+      { texto: 'Cero alcohol, cero drogas, cero tabaco. Cada dÃ­a que pasa es una victoria.', icono: 'ð§' },
+      { texto: 'Digo lo que pienso. No me miento.', icono: 'ð¬' },
+      { texto: 'Aprendo algo nuevo cada dÃ­a. La curiosidad me hace crecer.', icono: 'ð' },
+      { texto: 'Construyo una vida que realmente me apetezca vivir.', icono: 'â¨' },
     ];
 
     const MY_PRINCIPLES = [
@@ -404,49 +404,49 @@
       { n: 4,  texto: 'Mi palabra vale.' },
       { n: 5,  texto: 'Me hago cargo sin excusas.' },
       { n: 6,  texto: 'Familia es prioridad real.' },
-      { n: 7,  texto: 'Aprendo algo nuevo cada día.' },
-      { n: 8,  texto: 'Cada día mejor que ayer.' },
+      { n: 7,  texto: 'Aprendo algo nuevo cada dÃ­a.' },
+      { n: 8,  texto: 'Cada dÃ­a mejor que ayer.' },
       { n: 9,  texto: 'No me dejo pisar pero nunca piso a nadie.' },
       { n: 10, texto: 'Me pongo primero sin culpa.' },
     ];
 
     const PTI_EMOTIONS = [
-      { id: 'culpa', emoji: '😶', name: 'Culpa', color: '#E24B4A',
-        when: 'Cuando pienso en el mal que hice durante mi época de consumo.',
-        tools: ['Transforma la culpa en responsabilidad: ¿qué puedo hacer diferente hoy?', 'Escribe cómo te sientes sin filtros — sacar la culpa del cuerpo.'] },
-      { id: 'verguenza', emoji: '🙈', name: 'Vergüenza', color: '#C97B1A',
-        when: 'Cuando pienso en cómo traté a personas importantes para mí y recuerdo momentos del consumo.',
-        tools: ['Busca la situación concreta que te provoca vergüenza y trabaja cómo transformarla.', 'Escribe una carta emocional sobre esta época — sin enviársela a nadie.'] },
-      { id: 'tristeza', emoji: '💧', name: 'Tristeza', color: '#4A9EE0',
-        when: 'Cuando pienso en lo que perdí durante mi consumo.',
-        tools: ['Expresa cómo te sientes en el grupo — no te quedes solo con la tristeza.', 'Escribe sobre lo que perdiste — nombrarlo es el primer paso para aceptarlo.'] },
-      { id: 'rabia', emoji: '🔥', name: 'Rabia', color: '#E05A28',
+      { id: 'culpa', emoji: 'ð¶', name: 'Culpa', color: '#E24B4A',
+        when: 'Cuando pienso en el mal que hice durante mi Ã©poca de consumo.',
+        tools: ['Transforma la culpa en responsabilidad: Â¿quÃ© puedo hacer diferente hoy?', 'Escribe cÃ³mo te sientes sin filtros â sacar la culpa del cuerpo.'] },
+      { id: 'verguenza', emoji: 'ð', name: 'VergÃ¼enza', color: '#C97B1A',
+        when: 'Cuando pienso en cÃ³mo tratÃ© a personas importantes para mÃ­ y recuerdo momentos del consumo.',
+        tools: ['Busca la situaciÃ³n concreta que te provoca vergÃ¼enza y trabaja cÃ³mo transformarla.', 'Escribe una carta emocional sobre esta Ã©poca â sin enviÃ¡rsela a nadie.'] },
+      { id: 'tristeza', emoji: 'ð§', name: 'Tristeza', color: '#4A9EE0',
+        when: 'Cuando pienso en lo que perdÃ­ durante mi consumo.',
+        tools: ['Expresa cÃ³mo te sientes en el grupo â no te quedes solo con la tristeza.', 'Escribe sobre lo que perdiste â nombrarlo es el primer paso para aceptarlo.'] },
+      { id: 'rabia', emoji: 'ð¥', name: 'Rabia', color: '#E05A28',
         when: 'Reacciono con rabia cuando me encuentro molesto.',
-        tools: ['Detecta tus señales de alerta antes de explotar: tensión en mandíbula, pecho, respiración.', 'Para. Respira. No saltes antes de hacer una pausa consciente.'] },
-      { id: 'ansiedad', emoji: '⚡', name: 'Ansiedad', color: '#F0A500',
-        when: 'La identifico en señales físicas y psicológicas que aparecen ante situaciones de presión.',
-        tools: ['Reconoce tus propias señales de ansiedad — físicas y psicológicas — antes de que escalen.', 'Practica técnicas de relajación: respiración lenta, consciencia del cuerpo.'] },
-      { id: 'miedo', emoji: '🌑', name: 'Miedo', color: '#8B7FE8',
-        when: 'Miedo a diferentes situaciones que han surgido a raíz del consumo.',
-        tools: ['El miedo es una emoción que tienes que poder sentir — aprende a gestionarla, no a evitarla.', 'Afronta situaciones del día a día que evitas. Pequeños pasos, sin huir.'] },
-      { id: 'bloqueo', emoji: '🔒', name: 'Bloqueo emocional', color: '#6B7280',
-        when: 'Me pongo una barrera, justifico que no tengo que gestionar las emociones igual que los demás. Evito la responsabilidad emocional.',
-        tools: ['Identifica si has reprimido emociones durante este tiempo — ¿cuáles?', 'Concreta más lo que sientes: describes mucho pero sientes poco. ¿Qué hay debajo?', '¿Te incomoda la parte emocional? Explora por qué y sin juicio.', 'Trabaja la expresión corporal: que lo que sientes se muestre en tu cuerpo.'] },
+        tools: ['Detecta tus seÃ±ales de alerta antes de explotar: tensiÃ³n en mandÃ­bula, pecho, respiraciÃ³n.', 'Para. Respira. No saltes antes de hacer una pausa consciente.'] },
+      { id: 'ansiedad', emoji: 'â¡', name: 'Ansiedad', color: '#F0A500',
+        when: 'La identifico en seÃ±ales fÃ­sicas y psicolÃ³gicas que aparecen ante situaciones de presiÃ³n.',
+        tools: ['Reconoce tus propias seÃ±ales de ansiedad â fÃ­sicas y psicolÃ³gicas â antes de que escalen.', 'Practica tÃ©cnicas de relajaciÃ³n: respiraciÃ³n lenta, consciencia del cuerpo.'] },
+      { id: 'miedo', emoji: 'ð', name: 'Miedo', color: '#8B7FE8',
+        when: 'Miedo a diferentes situaciones que han surgido a raÃ­z del consumo.',
+        tools: ['El miedo es una emociÃ³n que tienes que poder sentir â aprende a gestionarla, no a evitarla.', 'Afronta situaciones del dÃ­a a dÃ­a que evitas. PequeÃ±os pasos, sin huir.'] },
+      { id: 'bloqueo', emoji: 'ð', name: 'Bloqueo emocional', color: '#6B7280',
+        when: 'Me pongo una barrera, justifico que no tengo que gestionar las emociones igual que los demÃ¡s. Evito la responsabilidad emocional.',
+        tools: ['Identifica si has reprimido emociones durante este tiempo â Â¿cuÃ¡les?', 'Concreta mÃ¡s lo que sientes: describes mucho pero sientes poco. Â¿QuÃ© hay debajo?', 'Â¿Te incomoda la parte emocional? Explora por quÃ© y sin juicio.', 'Trabaja la expresiÃ³n corporal: que lo que sientes se muestre en tu cuerpo.'] },
     ];
 
-    const STEP_NAMES = ['EMOCIÓN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÓN', 'PRESENCIA', 'VERSÍCULO'];
+    const STEP_NAMES = ['EMOCIÃN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÃN', 'PRESENCIA', 'VERSÃCULO'];
 
     const FEELING_FIELDS = [
-      { key: 'what',      label: '¿QUÉ PASÓ?',            placeholder: 'Describe la situación, el momento, el detonante…' },
-      { key: 'generated', label: '¿QUÉ GENERÓ EN TI?',    placeholder: 'Sensaciones físicas, pensamientos, recuerdos…'    },
-      { key: 'managed',   label: '¿CÓMO LO GESTIONASTE?', placeholder: 'Lo que hiciste, lo que evitaste, lo que necesitabas…' },
+      { key: 'what',      label: 'Â¿QUÃ PASÃ?',            placeholder: 'Describe la situaciÃ³n, el momento, el detonanteâ¦' },
+      { key: 'generated', label: 'Â¿QUÃ GENERÃ EN TI?',    placeholder: 'Sensaciones fÃ­sicas, pensamientos, recuerdosâ¦'    },
+      { key: 'managed',   label: 'Â¿CÃMO LO GESTIONASTE?', placeholder: 'Lo que hiciste, lo que evitaste, lo que necesitabasâ¦' },
     ];
 
     function intensityLabel(n) {
-      if (n <= 3) return 'Leve — manejable';
-      if (n <= 6) return 'Moderada — merece atención';
-      if (n <= 8) return 'Intensa — regístrala bien';
-      return 'Muy alta — cuídate';
+      if (n <= 3) return 'Leve â manejable';
+      if (n <= 6) return 'Moderada â merece atenciÃ³n';
+      if (n <= 8) return 'Intensa â regÃ­strala bien';
+      return 'Muy alta â cuÃ­date';
     }
 
     function formatDate(dateStr) {
@@ -457,13 +457,14 @@
       });
     }
 
-    /* ── Tab Bar ── */
+    /* ââ Tab Bar ââ */
     function TabBar({ activeTab, setActiveTab }) {
       const tabs = [
-        { id: 'home',      icon: 'ti-home',    label: 'Inicio'    },
-        { id: 'registro',  icon: 'ti-pencil',  label: 'Registro'  },
-        { id: 'pti',       icon: 'ti-map',     label: 'Mi PTI'    },
-        { id: 'historial', icon: 'ti-clock',   label: 'Historial' },
+        { id: 'home',        icon: 'ti-home',    label: 'Inicio'    },
+        { id: 'registro',    icon: 'ti-pencil',  label: 'Registro'  },
+        { id: 'pti',         icon: 'ti-map',     label: 'Mi PTI'    },
+        { id: 'presupuesto', icon: 'ti-wallet',  label: 'Presup.'   },
+        { id: 'historial',   icon: 'ti-clock',   label: 'Historial' },
       ];
       return (
         <nav className="tab-bar">
@@ -478,7 +479,7 @@
       );
     }
 
-    /* ── Pantalla Home ── */
+    /* ââ Pantalla Home ââ */
     function HomeScreen({ setActiveTab, darkMode, setDarkMode }) {
       const [stats, setStats] = useState(null);
       const [loadingStats, setLoadingStats] = useState(true);
@@ -525,7 +526,7 @@
       };
 
       const hour = new Date().getHours();
-      const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
+      const greeting = hour < 12 ? 'Buenos dÃ­as' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
 
       return (
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
@@ -535,7 +536,7 @@
                 Projecte Home
               </span>
               <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
-                {darkMode ? '☀️' : '🌙'}
+                {darkMode ? 'âï¸' : 'ð'}
               </button>
             </div>
 
@@ -543,7 +544,7 @@
               {greeting}, Xavi
             </h1>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
-              {!loadingStats && stats ? (stats.streak > 0 ? `Llevas ${stats.streak} día${stats.streak > 1 ? 's' : ''} registrando` : 'Empieza tu registro de hoy') : ' '}
+              {!loadingStats && stats ? (stats.streak > 0 ? `Llevas ${stats.streak} dÃ­a${stats.streak > 1 ? 's' : ''} registrando` : 'Empieza tu registro de hoy') : ' '}
             </p>
 
             <button onClick={() => setActiveTab('registro')} style={{
@@ -553,12 +554,12 @@
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               fontFamily: 'inherit', marginBottom: 24, transition: 'all 0.2s',
             }}>
-              ✏️ Registrar emoción
+              âï¸ Registrar emociÃ³n
             </button>
 
             {loadingStats && (
               <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)', fontSize: 13 }}>
-                Cargando…
+                Cargandoâ¦
               </div>
             )}
 
@@ -571,7 +572,7 @@
                   </div>
                   <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, border: '1px solid var(--border)' }}>
                     <div style={{ fontSize: 26, fontWeight: 500, color: 'var(--ph-navy)', marginBottom: 2 }}>{stats.streak}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>días de racha</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>dÃ­as de racha</div>
                   </div>
                 </div>
 
@@ -588,9 +589,9 @@
                             display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
                             borderBottom: i < stats.topPatterns.length - 1 ? '1px solid var(--border)' : 'none',
                           }}>
-                            <span style={{ fontSize: 18 }}>{pd?.emoji || '•'}</span>
+                            <span style={{ fontSize: 18 }}>{pd?.emoji || 'â¢'}</span>
                             <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)', background: 'var(--ph-soft-bg)', padding: '2px 8px', borderRadius: 20, border: '1px solid var(--ph-soft-border)', color: 'var(--ph-soft-text)' }}>{p.count}×</span>
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)', background: 'var(--ph-soft-bg)', padding: '2px 8px', borderRadius: 20, border: '1px solid var(--ph-soft-border)', color: 'var(--ph-soft-text)' }}>{p.count}Ã</span>
                           </div>
                         );
                       })}
@@ -600,14 +601,14 @@
 
                 {stats.topPatterns.length === 0 && (
                   <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 24, textAlign: 'center' }}>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Aún no hay patrones esta semana.<br/>¡Haz tu primer registro!</p>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>AÃºn no hay patrones esta semana.<br/>Â¡Haz tu primer registro!</p>
                   </div>
                 )}
 
                 {stats.lastRecord?.verse_text && (
                   <>
                     <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
-                      Último versículo
+                      Ãltimo versÃ­culo
                     </div>
                     <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 12, padding: 14, marginBottom: 24 }}>
                       <p style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--text-verse)', lineHeight: 1.65, margin: '0 0 6px 0' }}>
@@ -624,7 +625,7 @@
                   Tus fortalezas
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'].map(f => (
+                  {['Agradable ð¤', 'EmpÃ¡tico ð', 'Honesto ð¬', 'Responsable ð¯'].map(f => (
                     <div key={f} style={{
                       background: 'var(--card)', border: '1px solid var(--border)',
                       borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'var(--text)',
@@ -637,8 +638,7 @@
         </div>
       );
     }
-
-    /* ── Pantalla Mi PTI ── */
+    /* ââ Pantalla Mi PTI ââ */
     function PTIScreen({ darkMode, setDarkMode }) {
       const [view, setView] = useState('panel'); // 'panel' | 'patrones' | 'emociones' | 'valores' | 'principios'
       const [statsData, setStatsData] = useState(null);
@@ -681,7 +681,7 @@
         setLoadingStats(false);
       };
 
-      /* ── Cabecera reutilizable con botón atrás ── */
+      /* ââ Cabecera reutilizable con botÃ³n atrÃ¡s ââ */
       const SubHeader = ({ title, icon }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => setView('panel')} style={{
@@ -693,12 +693,12 @@
           </button>
           <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', flex: 1 }}>{title}</h2>
           <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
-            {darkMode ? '☀️' : '🌙'}
+            {darkMode ? 'âï¸' : 'ð'}
           </button>
         </div>
       );
 
-      /* ── Tarjeta de navegación del panel ── */
+      /* ââ Tarjeta de navegaciÃ³n del panel ââ */
       const NavCard = ({ icon, iconBg, iconColor, title, subtitle, badge, onClick }) => (
         <button onClick={onClick} style={{
           width: '100%', background: 'var(--card)', border: '1px solid var(--border)',
@@ -727,7 +727,7 @@
         </button>
       );
 
-      /* ── PANEL PRINCIPAL ── */
+      /* ââ PANEL PRINCIPAL ââ */
       if (view === 'panel') {
         const weekPatterns = statsData ? Object.entries(statsData.patternCount) : [];
         const topPattern = weekPatterns.sort((a,b) => b[1]-a[1])[0];
@@ -738,38 +738,38 @@
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)' }}>Mi PTI</h2>
                 <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
-                  {darkMode ? '☀️' : '🌙'}
+                  {darkMode ? 'âï¸' : 'ð'}
                 </button>
               </div>
 
-              {/* Stats rápidas */}
+              {/* Stats rÃ¡pidas */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
                 <div style={{ background: 'var(--card)', borderRadius: 12, padding: '14px 16px', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 28, fontWeight: 500, color: 'var(--ph-orange)' }}>
-                    {loadingStats ? '—' : statsData?.weekCount ?? 0}
+                    {loadingStats ? 'â' : statsData?.weekCount ?? 0}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>registros esta semana</div>
                 </div>
                 <div style={{ background: 'var(--card)', borderRadius: 12, padding: '14px 16px', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 28, fontWeight: 500, color: 'var(--ph-navy)' }}>
-                    {loadingStats ? '—' : statsData?.streak ?? 0}
+                    {loadingStats ? 'â' : statsData?.streak ?? 0}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>días de racha</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>dÃ­as de racha</div>
                 </div>
               </div>
 
-              {/* Patrón más activo */}
+              {/* PatrÃ³n mÃ¡s activo */}
               {!loadingStats && topPattern && (
                 <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 12, padding: '10px 14px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>{PATTERNS.find(p => p.label === topPattern[0])?.emoji || '•'}</span>
+                  <span style={{ fontSize: 18 }}>{PATTERNS.find(p => p.label === topPattern[0])?.emoji || 'â¢'}</span>
                   <div>
-                    <div style={{ fontSize: 11, color: 'var(--ph-soft-text)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Patrón más activo</div>
-                    <div style={{ fontSize: 13, color: 'var(--text)', marginTop: 1 }}>{topPattern[0]} · {topPattern[1]}×</div>
+                    <div style={{ fontSize: 11, color: 'var(--ph-soft-text)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>PatrÃ³n mÃ¡s activo</div>
+                    <div style={{ fontSize: 13, color: 'var(--text)', marginTop: 1 }}>{topPattern[0]} Â· {topPattern[1]}Ã</div>
                   </div>
                 </div>
               )}
 
-              {/* Tarjetas de navegación */}
+              {/* Tarjetas de navegaciÃ³n */}
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
                 Mi trabajo
               </div>
@@ -812,7 +812,7 @@
                 Tus fortalezas
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'].map(f => (
+                {['Agradable ð¤', 'EmpÃ¡tico ð', 'Honesto ð¬', 'Responsable ð¯'].map(f => (
                   <div key={f} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)' }}>
                     {f}
                   </div>
@@ -823,13 +823,13 @@
         );
       }
 
-      /* ── VISTA: Mis Patrones ── */
+      /* ââ VISTA: Mis Patrones ââ */
       if (view === 'patrones') return (
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
           <div className="ej-container">
             <SubHeader title="Mis patrones" />
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
-              Toca un patrón para ver las herramientas de trabajo de tu PTI.
+              Toca un patrÃ³n para ver las herramientas de trabajo de tu PTI.
             </p>
             {PATTERNS.map(p => {
               const count = statsData?.patternCount?.[p.label] || 0;
@@ -848,16 +848,16 @@
                     <div className="pti-pat-body">
                       <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.65, marginBottom: 12 }}>{p.desc}</p>
                       <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ph-orange)', fontWeight: 700, marginBottom: 8 }}>
-                        🧰 Herramientas de trabajo
+                        ð§° Herramientas de trabajo
                       </div>
                       {p.tools.map((t, i) => (
                         <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-card)', lineHeight: 1.6, padding: '6px 0', borderTop: i === 0 ? 'none' : '1px solid var(--divider)' }}>
-                          <span style={{ color: 'var(--ph-orange)', flexShrink: 0, marginTop: 2 }}>→</span>
+                          <span style={{ color: 'var(--ph-orange)', flexShrink: 0, marginTop: 2 }}>â</span>
                           <span>{t}</span>
                         </div>
                       ))}
                       <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginTop: 14, marginBottom: 6 }}>
-                        Pregunta de reflexión
+                        Pregunta de reflexiÃ³n
                       </div>
                       <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text)', lineHeight: 1.65, fontFamily: 'DM Serif Display, Georgia, serif' }}>
                         {p.q}
@@ -871,13 +871,13 @@
         </div>
       );
 
-      /* ── VISTA: Mis Emociones ── */
+      /* ââ VISTA: Mis Emociones ââ */
       if (view === 'emociones') return (
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
           <div className="ej-container">
             <SubHeader title="Mis emociones" />
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
-              Las emociones que trabajas en tu PTI, con las herramientas específicas.
+              Las emociones que trabajas en tu PTI, con las herramientas especÃ­ficas.
             </p>
             {PTI_EMOTIONS.map(e => {
               const isOpen = expandedEmotion === e.id;
@@ -893,15 +893,15 @@
                   {isOpen && (
                     <div className="pti-pat-body">
                       <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: e.color, fontWeight: 700, marginBottom: 6 }}>
-                        Cuándo la siento
+                        CuÃ¡ndo la siento
                       </div>
                       <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.65, marginBottom: 14, fontStyle: 'italic' }}>"{e.when}"</p>
                       <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: e.color, fontWeight: 700, marginBottom: 8 }}>
-                        🧰 Herramientas de gestión
+                        ð§° Herramientas de gestiÃ³n
                       </div>
                       {e.tools.map((t, i) => (
                         <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-card)', lineHeight: 1.6, padding: '6px 0', borderTop: i === 0 ? 'none' : '1px solid var(--divider)' }}>
-                          <span style={{ color: e.color, flexShrink: 0, marginTop: 2 }}>→</span>
+                          <span style={{ color: e.color, flexShrink: 0, marginTop: 2 }}>â</span>
                           <span>{t}</span>
                         </div>
                       ))}
@@ -912,17 +912,17 @@
             })}
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginTop: 8 }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 8 }}>
-                Emoción más difícil de identificar
+                EmociÃ³n mÃ¡s difÃ­cil de identificar
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.65 }}>
-                🔒 <strong>Bloqueo emocional</strong> — me pongo una barrera y justifico que no tengo que gestionar las emociones igual que los demás.
+                ð <strong>Bloqueo emocional</strong> â me pongo una barrera y justifico que no tengo que gestionar las emociones igual que los demÃ¡s.
               </p>
             </div>
           </div>
         </div>
       );
 
-      /* ── VISTA: Mis Valores ── */
+      /* ââ VISTA: Mis Valores ââ */
       if (view === 'valores') return (
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
           <div className="ej-container">
@@ -938,7 +938,7 @@
                     <span style={{ fontSize: 20, flexShrink: 0 }}>{v.emoji}</span>
                     <span style={{ flex: 1, fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>{v.label}</span>
                     {usageCount > 0 && (
-                      <span style={{ fontSize: 11, color: 'var(--ph-soft-text)', background: 'var(--ph-soft-bg)', padding: '2px 8px', borderRadius: 20, border: '1px solid var(--ph-soft-border)' }}>{usageCount}×</span>
+                      <span style={{ fontSize: 11, color: 'var(--ph-soft-text)', background: 'var(--ph-soft-bg)', padding: '2px 8px', borderRadius: 20, border: '1px solid var(--ph-soft-border)' }}>{usageCount}Ã</span>
                     )}
                   </div>
                 );
@@ -948,7 +948,7 @@
         </div>
       );
 
-      /* ── VISTA: Mis Principios ── */
+      /* ââ VISTA: Mis Principios ââ */
       if (view === 'principios') return (
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
           <div className="ej-container">
@@ -976,7 +976,7 @@
       return null;
     }
 
-    /* ── Pantalla Historial ── */
+    /* ââ Pantalla Historial ââ */
     function HistorialScreen({ darkMode, setDarkMode }) {
       const [registros, setRegistros] = useState([]);
       const [loading, setLoading]     = useState(true);
@@ -1008,20 +1008,20 @@
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
               <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)' }}>Historial</h2>
               <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
-                {darkMode ? '☀️' : '🌙'}
+                {darkMode ? 'âï¸' : 'ð'}
               </button>
             </div>
 
             {loading && (
               <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
-                Cargando…
+                Cargandoâ¦
               </div>
             )}
 
             {!loading && registros.length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                <div style={{ fontSize: 40, marginBottom: 16 }}>📭</div>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Aún no hay registros.</p>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>ð­</div>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>AÃºn no hay registros.</p>
               </div>
             )}
 
@@ -1044,8 +1044,8 @@
                         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{formatDate(r.created_at)}</div>
                         {(r.patterns_active?.length > 0 || r.values_selected?.length > 0) && (
                           <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
-                            {r.patterns_active?.length > 0 && <span>{r.patterns_active.join(' · ')}</span>}
-                            {r.patterns_active?.length > 0 && r.values_selected?.length > 0 && <span style={{ color: 'var(--text-secondary)' }}> — </span>}
+                            {r.patterns_active?.length > 0 && <span>{r.patterns_active.join(' Â· ')}</span>}
+                            {r.patterns_active?.length > 0 && r.values_selected?.length > 0 && <span style={{ color: 'var(--text-secondary)' }}> â </span>}
                             {r.values_selected?.length > 0 && <span style={{ color: 'var(--ph-orange)' }}>{r.values_selected.join(', ')}</span>}
                           </div>
                         )}
@@ -1056,7 +1056,7 @@
 
                   {expanded === r.id && (
                     <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 14px 14px', padding: '14px 16px' }}>
-                      {[['¿Qué pasó?', r.feeling_what], ['¿Qué generó?', r.feeling_generated], ['¿Cómo lo gestioné?', r.feeling_managed]].map(([label, val]) => val ? (
+                      {[['Â¿QuÃ© pasÃ³?', r.feeling_what], ['Â¿QuÃ© generÃ³?', r.feeling_generated], ['Â¿CÃ³mo lo gestionÃ©?', r.feeling_managed]].map(([label, val]) => val ? (
                         <div key={label} style={{ marginBottom: 12 }}>
                           <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 4 }}>{label}</div>
                           <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.6, margin: 0 }}>{val}</p>
@@ -1073,7 +1073,7 @@
                         marginTop: 14, padding: '8px 14px', background: 'transparent',
                         border: '1px solid #E24B4A44', borderRadius: 8, color: '#E24B4A',
                         fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
-                      }}>🗑 Eliminar registro</button>
+                      }}>ð Eliminar registro</button>
                     </div>
                   )}
                 </div>
@@ -1083,8 +1083,8 @@
             {confirmDelete && (
               <div style={{ position: 'fixed', inset: 0, background: 'var(--modal-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 200 }}>
                 <div style={{ background: 'var(--modal-card)', border: '1px solid var(--border)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
-                  <p style={{ fontSize: 15, color: 'var(--text)', fontWeight: 500, marginBottom: 8 }}>¿Eliminar este registro?</p>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Esta acción no se puede deshacer.</p>
+                  <p style={{ fontSize: 15, color: 'var(--text)', fontWeight: 500, marginBottom: 8 }}>Â¿Eliminar este registro?</p>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Esta acciÃ³n no se puede deshacer.</p>
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: 12, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, color: 'var(--text)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
                     <button onClick={() => deleteRegistro(confirmDelete)} style={{ flex: 1, padding: 12, background: '#E24B4A', border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Eliminar</button>
@@ -1097,7 +1097,250 @@
       );
     }
 
-    /* ── App principal ── */
+    /* ââ Pantalla Presupuesto mensual ââ
+       Tabla Supabase necesaria (ejecutar en Supabase SQL editor):
+       CREATE TABLE presupuestos (
+         id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+         created_at timestamptz DEFAULT now(),
+         mes int2 NOT NULL,
+         anio int2 NOT NULL,
+         data jsonb,
+         updated_at timestamptz DEFAULT now(),
+         UNIQUE (mes, anio)
+       );
+       ALTER TABLE presupuestos ENABLE ROW LEVEL SECURITY;
+       CREATE POLICY "Acceso personal" ON presupuestos FOR ALL USING (true);
+    ââ */
+    function BudgetScreen({ darkMode, setDarkMode }) {
+      const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const now = new Date();
+      const [mes,  setMes]  = useState(now.getMonth() + 1);
+      const [anio, setAnio] = useState(now.getFullYear());
+      const [saving, setSaving] = useState(false);
+      const [saved,  setSaved]  = useState(false);
+
+      const INGRESOS_KEYS = [
+        { key: 'nomina1',   label: 'NÃ³mina 1'       },
+        { key: 'nomina2',   label: 'NÃ³mina 2'       },
+        { key: 'otros_ing', label: 'Otros ingresos' },
+      ];
+      const GASTOS_KEYS = [
+        { key: 'alojamiento',    label: 'Alojamiento'            },
+        { key: 'comunidad',      label: 'Gastos de comunidad'    },
+        { key: 'hipoteca',       label: 'Hipoteca'               },
+        { key: 'prestamo',       label: 'PrÃ©stamo'               },
+        { key: 'transporte',     label: 'Transporte'             },
+        { key: 'garaje',         label: 'Garaje'                 },
+        { key: 'alimentacion',   label: 'AlimentaciÃ³n'           },
+        { key: 'telefono',       label: 'TelÃ©fono'               },
+        { key: 'suministros',    label: 'Luz / gas / agua'       },
+        { key: 'internet',       label: 'Internet'               },
+        { key: 'suscripciones',  label: 'Suscripciones'          },
+        { key: 'mantenimiento',  label: 'Mantenimiento'          },
+        { key: 'seguro',         label: 'Seguro (casa/coche)'    },
+        { key: 'matricula',      label: 'MatrÃ­cula'              },
+        { key: 'guarderia',      label: 'GuarderÃ­a'              },
+        { key: 'extraescolares', label: 'Extraescolares'         },
+        { key: 'pension_hijos',  label: 'PensiÃ³n hijos'          },
+        { key: 'animal',         label: 'Animal de compaÃ±Ã­a'     },
+        { key: 'cuidado',        label: 'Cuidado personal'       },
+        { key: 'tabaco',         label: 'Tabaco'                 },
+        { key: 'cafe',           label: 'CafÃ©'                   },
+        { key: 'ocio',           label: 'Ocio / actividades'     },
+        { key: 'comer_fuera',    label: 'Comer fuera'            },
+        { key: 'projecte_home',  label: 'Projecte Home'          },
+        { key: 'ahorro',         label: 'Ahorro'                 },
+        { key: 'otros_gas',      label: 'Otros gastos'           },
+      ];
+
+      const blankRows = (keys) => Object.fromEntries(keys.map(({key}) => [key, { est: '', real: '' }]));
+
+      const [ingresos, setIngresos] = useState(blankRows(INGRESOS_KEYS));
+      const [gastos,   setGastos]   = useState(blankRows(GASTOS_KEYS));
+
+      const sKey = (m, y) => `budget_${y}_${m}`;
+
+      useEffect(() => {
+        const stored = localStorage.getItem(sKey(mes, anio));
+        if (stored) {
+          try {
+            const p = JSON.parse(stored);
+            setIngresos(p.ingresos || blankRows(INGRESOS_KEYS));
+            setGastos(p.gastos    || blankRows(GASTOS_KEYS));
+          } catch(e) {
+            setIngresos(blankRows(INGRESOS_KEYS));
+            setGastos(blankRows(GASTOS_KEYS));
+          }
+        } else {
+          setIngresos(blankRows(INGRESOS_KEYS));
+          setGastos(blankRows(GASTOS_KEYS));
+        }
+      }, [mes, anio]);
+
+      const sum = (obj, col) => Object.values(obj).reduce((acc, v) => acc + (parseFloat(v[col]) || 0), 0);
+      const totalIngEst  = sum(ingresos, 'est');
+      const totalIngReal = sum(ingresos, 'real');
+      const totalGasEst  = sum(gastos,   'est');
+      const totalGasReal = sum(gastos,   'real');
+      const flujoEst     = totalIngEst  - totalGasEst;
+      const flujoReal    = totalIngReal - totalGasReal;
+      const fmt = n => n.toFixed(0);
+
+      const handleSave = () => {
+        setSaving(true);
+        localStorage.setItem(sKey(mes, anio), JSON.stringify({ ingresos, gastos }));
+        db.from('presupuestos')
+          .upsert({ mes, anio, data: { ingresos, gastos }, updated_at: new Date().toISOString() }, { onConflict: 'mes,anio' })
+          .then(() => {}).catch(() => {});
+        setTimeout(() => {
+          setSaving(false);
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2200);
+        }, 400);
+      };
+
+      const handleShare = () => {
+        const lines = [
+          `ð PRESUPUESTO MENSUAL â ${MESES[mes-1].toUpperCase()} ${anio}`,
+          '',
+          'ð¥ INGRESOS',
+          ...INGRESOS_KEYS.map(({key, label}) =>
+            `â¢ ${label}: real ${ingresos[key].real || 0}â¬ / est. ${ingresos[key].est || 0}â¬`
+          ),
+          `TOTAL INGRESOS: ${fmt(totalIngReal)}â¬ real / ${fmt(totalIngEst)}â¬ est.`,
+          '',
+          'ð¤ GASTOS',
+          ...GASTOS_KEYS.map(({key, label}) =>
+            `â¢ ${label}: real ${gastos[key].real || 0}â¬ / est. ${gastos[key].est || 0}â¬`
+          ),
+          `TOTAL GASTOS: ${fmt(totalGasReal)}â¬ real / ${fmt(totalGasEst)}â¬ est.`,
+          '',
+          `ð§ FLUJO NETO: ${fmt(flujoReal)}â¬ real / ${fmt(flujoEst)}â¬ est.`,
+        ];
+        const text = encodeURIComponent(lines.join('\n'));
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+      };
+
+      const inputStyle = {
+        background: 'var(--input-bg)', border: '1px solid var(--border)',
+        borderRadius: 8, padding: '5px 6px', fontSize: 13, color: 'var(--text)',
+        textAlign: 'right', width: '100%', fontFamily: 'inherit', outline: 'none',
+        WebkitAppearance: 'none',
+      };
+
+      const BRow = ({ label, valEst, valReal, onEst, onReal }) => (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--divider)' }}>
+          <span style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.3 }}>{label}</span>
+          <input type="number" inputMode="decimal" placeholder="0" value={valEst}  onChange={e => onEst(e.target.value)}  style={inputStyle} />
+          <input type="number" inputMode="decimal" placeholder="0" value={valReal} onChange={e => onReal(e.target.value)} style={inputStyle} />
+        </div>
+      );
+
+      const TotalRow = ({ label, est, real, color }) => (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6, paddingTop: 10, marginTop: 2 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color }}>{label}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ph-orange)', textAlign: 'right' }}>{fmt(est)}â¬</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', textAlign: 'right' }}>{fmt(real)}â¬</span>
+        </div>
+      );
+
+      return (
+        <div className={`ej-root${darkMode ? '' : ' light'}`}>
+          <div className="ej-container">
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 19, fontWeight: 500, color: 'var(--text)' }}>Presupuesto mensual</h2>
+              <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>{darkMode ? 'âï¸' : 'ð'}</button>
+            </div>
+
+            {/* Selector mes / aÃ±o */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
+              <select value={mes} onChange={e => setMes(Number(e.target.value))} style={{
+                flex: 1, background: 'var(--card)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--text)', fontFamily: 'inherit',
+              }}>
+                {MESES.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
+              </select>
+              <select value={anio} onChange={e => setAnio(Number(e.target.value))} style={{
+                width: 90, background: 'var(--card)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--text)', fontFamily: 'inherit',
+              }}>
+                {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+
+            {/* Cabeceras columnas */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6, marginBottom: 8, paddingLeft: 2 }}>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}></span>
+              <span style={{ fontSize: 9, textAlign: 'center', color: 'var(--ph-orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Estim.</span>
+              <span style={{ fontSize: 9, textAlign: 'center', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Real</span>
+            </div>
+
+            {/* INGRESOS */}
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#4CAF50', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>ð¥ Ingresos</div>
+              {INGRESOS_KEYS.map(({key, label}) => (
+                <BRow key={key} label={label}
+                  valEst={ingresos[key].est} valReal={ingresos[key].real}
+                  onEst={v  => setIngresos(p => ({ ...p, [key]: { ...p[key], est:  v } }))}
+                  onReal={v => setIngresos(p => ({ ...p, [key]: { ...p[key], real: v } }))}
+                />
+              ))}
+              <TotalRow label="Total ingresos" est={totalIngEst} real={totalIngReal} color="#4CAF50" />
+            </div>
+
+            {/* GASTOS */}
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#E24B4A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>ð¤ Gastos</div>
+              {GASTOS_KEYS.map(({key, label}) => (
+                <BRow key={key} label={label}
+                  valEst={gastos[key].est} valReal={gastos[key].real}
+                  onEst={v  => setGastos(p => ({ ...p, [key]: { ...p[key], est:  v } }))}
+                  onReal={v => setGastos(p => ({ ...p, [key]: { ...p[key], real: v } }))}
+                />
+              ))}
+              <TotalRow label="Total gastos" est={totalGasEst} real={totalGasReal} color="#E24B4A" />
+            </div>
+
+            {/* FLUJO NETO */}
+            <div style={{
+              background: flujoReal >= 0 ? (darkMode ? '#0a2a1a' : '#f0faf4') : (darkMode ? '#2a0a0a' : '#fdf0f0'),
+              border: `1px solid ${flujoReal >= 0 ? '#4CAF5055' : '#E24B4A55'}`,
+              borderRadius: 14, padding: '14px 16px', marginBottom: 20,
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>ð§ Flujo neto</span>
+                <span style={{ fontSize: 14, fontWeight: 700, textAlign: 'right', color: flujoEst  >= 0 ? '#4CAF50' : '#E24B4A' }}>{fmt(flujoEst)}â¬</span>
+                <span style={{ fontSize: 14, fontWeight: 700, textAlign: 'right', color: flujoReal >= 0 ? '#4CAF50' : '#E24B4A' }}>{fmt(flujoReal)}â¬</span>
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+              <button onClick={handleSave} disabled={saving} style={{
+                flex: 1, padding: '13px 0',
+                background: saved ? '#4CAF50' : 'var(--ph-orange)',
+                border: 'none', borderRadius: 14, color: '#fff',
+                fontSize: 14, fontWeight: 600, cursor: saving ? 'wait' : 'pointer',
+                fontFamily: 'inherit', transition: 'background 0.3s',
+              }}>
+                {saving ? 'Guardandoâ¦' : saved ? 'â Guardado' : 'ð¾ Guardar'}
+              </button>
+              <button onClick={handleShare} style={{
+                flex: 1, padding: '13px 0', background: '#25D366',
+                border: 'none', borderRadius: 14, color: '#fff',
+                fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}>
+                ð² Enviar WA
+              </button>
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    /* ââ App principal ââ */
     function App() {
       const [darkMode, setDarkMode]             = useState(false);
       const [activeTab, setActiveTab]           = useState('home');
@@ -1144,22 +1387,22 @@
           ? ALL_VALUES.find(v => v.id === current.anchor)?.label || current.anchor
           : 'ninguno seleccionado';
 
-        const prompt = `Eres un guía cálido y cercano que acompaña a un hombre en proceso de recuperación personal. Usa siempre el género masculino. Esta persona acaba de registrar lo siguiente:
+        const prompt = `Eres un guÃ­a cÃ¡lido y cercano que acompaÃ±a a un hombre en proceso de recuperaciÃ³n personal. Usa siempre el gÃ©nero masculino. Esta persona acaba de registrar lo siguiente:
 
-EMOCIÓN: ${current.emotion.name}
+EMOCIÃN: ${current.emotion.name}
 INTENSIDAD: ${current.intensity}/10
-¿QUÉ PASÓ?: ${current.feelings.what}
-¿QUÉ GENERÓ EN ÉL?: ${current.feelings.generated}
-¿CÓMO LO GESTIONÓ?: ${current.feelings.managed}
-PATRONES QUE RECONOCIÓ EN SÍ MISMO HOY: ${patternsText}
-VALOR ANCLA QUE ELIGIÓ: ${anchorText}
+Â¿QUÃ PASÃ?: ${current.feelings.what}
+Â¿QUÃ GENERÃ EN ÃL?: ${current.feelings.generated}
+Â¿CÃMO LO GESTIONÃ?: ${current.feelings.managed}
+PATRONES QUE RECONOCIÃ EN SÃ MISMO HOY: ${patternsText}
+VALOR ANCLA QUE ELIGIÃ: ${anchorText}
 
-Lee CON MUCHA ATENCIÓN lo que escribió. Elige UN versículo de la Biblia Reina-Valera 1960 (RV1960) que hable DIRECTAMENTE a SU situación concreta — no a la emoción genérica, sino a lo específico que vivió y los patrones que reconoció en sí mismo.
+Lee CON MUCHA ATENCIÃN lo que escribiÃ³. Elige UN versÃ­culo de la Biblia Reina-Valera 1960 (RV1960) que hable DIRECTAMENTE a SU situaciÃ³n concreta â no a la emociÃ³n genÃ©rica, sino a lo especÃ­fico que viviÃ³ y los patrones que reconociÃ³ en sÃ­ mismo.
 
-Luego escribe una explicación "En otras palabras" de 2-3 frases que conecte el versículo con lo que esa persona escribió hoy, mencionando el valor ancla que eligió si es relevante. Tono cálido, cercano, sin tecnicismos religiosos, sin moralizar. Que se sienta visto, no juzgado. Háblale de tú.
+Luego escribe una explicaciÃ³n "En otras palabras" de 2-3 frases que conecte el versÃ­culo con lo que esa persona escribiÃ³ hoy, mencionando el valor ancla que eligiÃ³ si es relevante. Tono cÃ¡lido, cercano, sin tecnicismos religiosos, sin moralizar. Que se sienta visto, no juzgado. HÃ¡blale de tÃº.
 
-Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o después:
-{"versiculo":"texto exacto del versículo en RV1960","referencia":"Libro Capítulo:Versículo","palabras":"explicación cálida y personal"}`;
+Responde ÃNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o despuÃ©s:
+{"versiculo":"texto exacto del versÃ­culo en RV1960","referencia":"Libro CapÃ­tulo:VersÃ­culo","palabras":"explicaciÃ³n cÃ¡lida y personal"}`;
 
         try {
           const response = await fetch('/api/verse', {
@@ -1206,7 +1449,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
           }
 
         } catch (err) {
-          setError('No se pudo obtener el versículo. Inténtalo de nuevo.');
+          setError('No se pudo obtener el versÃ­culo. IntÃ©ntalo de nuevo.');
         } finally {
           setLoading(false);
         }
@@ -1250,7 +1493,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
         return true;
       };
 
-      /* ── Renders de tabs ── */
+      /* ââ Renders de tabs ââ */
       if (activeTab === 'home') return (
         <>
           <HomeScreen setActiveTab={setActiveTab} darkMode={darkMode} setDarkMode={setDarkMode} />
@@ -1265,6 +1508,13 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
         </>
       );
 
+      if (activeTab === 'presupuesto') return (
+        <>
+          <BudgetScreen darkMode={darkMode} setDarkMode={setDarkMode} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </>
+      );
+
       if (activeTab === 'historial') return (
         <>
           <HistorialScreen darkMode={darkMode} setDarkMode={setDarkMode} />
@@ -1272,7 +1522,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
         </>
       );
 
-      /* ── Tab Registro — flujo de 6 pasos ── */
+      /* ââ Tab Registro â flujo de 6 pasos ââ */
       const activeColor = emotion?.color || 'var(--ph-orange)';
 
       return (
@@ -1286,10 +1536,10 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>
-                  Paso {step} · {STEP_NAMES[step - 1]}
+                  Paso {step} Â· {STEP_NAMES[step - 1]}
                 </div>
                 <button className="theme-toggle" onClick={() => setDarkMode(d => !d)} title={darkMode ? 'Modo claro' : 'Modo oscuro'}>
-                  {darkMode ? '☀️' : '🌙'}
+                  {darkMode ? 'âï¸' : 'ð'}
                 </button>
               </div>
 
@@ -1305,11 +1555,11 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
 
               <div key={step} className="ej-step">
 
-                {/* Paso 1 — Emoción */}
+                {/* Paso 1 â EmociÃ³n */}
                 {step === 1 && (
                   <>
                     <h1 className="ej-serif" style={{ fontSize: 32, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 28px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
-                      {'¿Qué estás\nsintiendo?'}
+                      {'Â¿QuÃ© estÃ¡s\nsintiendo?'}
                     </h1>
                     <div className="ej-grid2">
                       {EMOTIONS.map(e => {
@@ -1332,11 +1582,11 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                   </>
                 )}
 
-                {/* Paso 2 — Intensidad */}
+                {/* Paso 2 â Intensidad */}
                 {step === 2 && (
                   <>
                     <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 28px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
-                      {'¿Con qué fuerza\nla sientes?'}
+                      {'Â¿Con quÃ© fuerza\nla sientes?'}
                     </h1>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
                       {[1,2,3,4,5,6,7,8,9,10].map(n => {
@@ -1364,14 +1614,14 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                   </>
                 )}
 
-                {/* Paso 3 — Hoja de sentimiento */}
+                {/* Paso 3 â Hoja de sentimiento */}
                 {step === 3 && (
                   <>
                     <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
                       {'Hoja de\nsentimiento'}
                     </h1>
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
-                      Escribe sin filtros. Nadie más lo leerá.
+                      Escribe sin filtros. Nadie mÃ¡s lo leerÃ¡.
                     </p>
                     {FEELING_FIELDS.map(f => (
                       <div key={f.key} style={{ marginBottom: 18 }}>
@@ -1385,14 +1635,14 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                   </>
                 )}
 
-                {/* Paso 4 — Patrón */}
+                {/* Paso 4 â PatrÃ³n */}
                 {step === 4 && (
                   <>
                     <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', fontWeight: 400 }}>
-                      ¿Qué patrón<br />reconoces hoy?
+                      Â¿QuÃ© patrÃ³n<br />reconoces hoy?
                     </h1>
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
-                      Toca los que estuvieron activos. Puedes elegir hasta 3. Si no ves ninguno, continúa.
+                      Toca los que estuvieron activos. Puedes elegir hasta 3. Si no ves ninguno, continÃºa.
                     </p>
                     <div className="ej-grid2">
                       {PATTERNS.map(p => {
@@ -1429,7 +1679,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                   </>
                 )}
 
-                {/* Paso 5 — Presencia */}
+                {/* Paso 5 â Presencia */}
                 {step === 5 && (() => {
                   const fraseIdx = Math.floor(Math.random() * FRASES_MOTIVACIONALES.length);
                   const frase = FRASES_MOTIVACIONALES[fraseIdx];
@@ -1453,12 +1703,12 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                             )}
                             <div className="pti-card" style={{ borderTop: `3px solid ${activeColor}`, marginBottom: 20 }}>
                               <div className="pti-header">
-                                <div className="pti-title" style={{ color: activeColor }}>🧰 Tu herramienta ahora</div>
+                                <div className="pti-title" style={{ color: activeColor }}>ð§° Tu herramienta ahora</div>
                               </div>
                               <div className="pti-tools">
                                 {p.tools.map((t, i) => (
                                   <div key={i} className="pti-tool">
-                                    <span className="pti-arrow" style={{ color: activeColor }}>→</span>
+                                    <span className="pti-arrow" style={{ color: activeColor }}>â</span>
                                     <span>{t}</span>
                                   </div>
                                 ))}
@@ -1509,19 +1759,19 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                       </div>
 
                       <p style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.6 }}>
-                        Léelo. Respira. Cuando estés listo, recibe tu versículo.
+                        LÃ©elo. Respira. Cuando estÃ©s listo, recibe tu versÃ­culo.
                       </p>
                     </>
                   );
                 })()}
 
-                {/* Paso 6 — Versículo */}
+                {/* Paso 6 â VersÃ­culo */}
                 {step === 6 && (
                   <>
                     {loading && (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 0' }}>
-                        <div className="ej-pulse" style={{ fontSize: 48, lineHeight: 1 }}>📖</div>
-                        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 20 }}>Buscando versículo en RV1960...</p>
+                        <div className="ej-pulse" style={{ fontSize: 48, lineHeight: 1 }}>ð</div>
+                        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 20 }}>Buscando versÃ­culo en RV1960...</p>
                       </div>
                     )}
 
@@ -1547,7 +1797,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                             </div>
                             {selectedPatterns.length > 0 && (
                               <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
-                                {selectedPatterns.map(p => p.label).join(' · ')}
+                                {selectedPatterns.map(p => p.label).join(' Â· ')}
                               </div>
                             )}
                             {anchorValue && (
@@ -1579,7 +1829,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                           return (
                             <div style={{ background: 'var(--card)', borderRadius: 14, padding: 16, border: `1px solid var(--border)`, borderLeft: `3px solid ${activeColor}`, marginTop: 12 }}>
                               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, fontWeight: 700, marginBottom: 8 }}>
-                                🧰 Recuerda tu herramienta · {p.label}
+                                ð§° Recuerda tu herramienta Â· {p.label}
                               </div>
                               <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.65, margin: 0 }}>
                                 {p.tools[0]}
@@ -1589,7 +1839,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                         })()}
 
                         <div style={{ background: `${activeColor}18`, border: `1px solid ${activeColor}35`, borderRadius: 10, padding: 12, marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, color: activeColor, fontSize: 13, fontWeight: 500 }}>
-                          <span>✓</span>
+                          <span>â</span>
                           <span>Registro completado{saved ? ' y guardado' : ''}</span>
                           {saved && (
                             <button className="ej-btn" onClick={() => setActiveTab('historial')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: activeColor, fontSize: 12, padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>
@@ -1605,11 +1855,11 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                             try {
                               await navigator.share({
                                 title: 'Hoja de sentimiento',
-                                text: `${emotion.emoji} ${emotion.name} · ${intensity}/10\n${patternsLabel ? `Patrón: ${patternsLabel}\n` : ''}${anchorLabel ? `Ancla: ${anchorLabel}\n` : ''}\n¿Qué pasó?\n${feelings.what}\n\n¿Qué generó?\n${feelings.generated}\n\n¿Cómo lo gestioné?\n${feelings.managed}\n\n${verse.referencia}\n"${verse.versiculo}"`,
+                                text: `${emotion.emoji} ${emotion.name} Â· ${intensity}/10\n${patternsLabel ? `PatrÃ³n: ${patternsLabel}\n` : ''}${anchorLabel ? `Ancla: ${anchorLabel}\n` : ''}\nÂ¿QuÃ© pasÃ³?\n${feelings.what}\n\nÂ¿QuÃ© generÃ³?\n${feelings.generated}\n\nÂ¿CÃ³mo lo gestionÃ©?\n${feelings.managed}\n\n${verse.referencia}\n"${verse.versiculo}"`,
                               });
                             } catch(e) {}
                           }} style={{ width: '100%', marginTop: 10, padding: '13px 0', background: 'transparent', border: `1px solid ${activeColor}50`, borderRadius: 14, color: activeColor, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            <span>↗</span> Compartir hoja
+                            <span>â</span> Compartir hoja
                           </button>
                         )}
                       </>
@@ -1621,12 +1871,12 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
               <div style={{ marginTop: 28, display: 'flex', gap: 10 }}>
                 {step > 1 && step < 6 && (
                   <button className="ej-btn" onClick={handleBack} style={{ padding: '15px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
-                    Atrás
+                    AtrÃ¡s
                   </button>
                 )}
                 {step < 6 && (
                   <button className="ej-btn ej-main" disabled={!canContinue()} onClick={handleNext} style={{ flex: 1, padding: 15, borderRadius: 14, fontSize: 15, fontWeight: 600, background: canContinue() ? activeColor : 'var(--btn-off-bg)', color: canContinue() ? '#fff' : 'var(--btn-off-text)', border: 'none' }}>
-                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrón' : step === 5 ? '📖 Recibir versículo' : 'Continuar'}
+                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrÃ³n' : step === 5 ? 'ð Recibir versÃ­culo' : 'Continuar'}
                   </button>
                 )}
                 {step === 6 && !loading && verse && (
