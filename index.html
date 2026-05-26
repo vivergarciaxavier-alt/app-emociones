@@ -434,7 +434,7 @@
         tools: ['Identifica si has reprimido emociones durante este tiempo — ¿cuáles?', 'Concreta más lo que sientes: describes mucho pero sientes poco. ¿Qué hay debajo?', '¿Te incomoda la parte emocional? Explora por qué y sin juicio.', 'Trabaja la expresión corporal: que lo que sientes se muestre en tu cuerpo.'] },
     ];
 
-    const STEP_NAMES = ['EMOCIÓN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÓN', 'PRESENCIA', 'VERSÍCULO'];
+    const STEP_NAMES = ['EMOCIÓN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÓN', 'CIERRE'];
 
     const FEELING_FIELDS = [
       { key: 'what',      label: '¿QUÉ PASÓ?',            placeholder: 'Describe la situación, el momento, el detonante…' },
@@ -494,7 +494,7 @@
         sevenAgo.setDate(sevenAgo.getDate() - 7);
 
         const { data } = await db.from('registros')
-          .select('created_at, patterns_active, emotion_name, verse_text, verse_reference')
+          .select('created_at, patterns_active, emotion_name')
           .gte('created_at', thirtyAgo.toISOString())
           .order('created_at', { ascending: false });
 
@@ -603,22 +603,6 @@
                   <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 24, textAlign: 'center' }}>
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Aún no hay patrones esta semana.<br/>¡Haz tu primer registro!</p>
                   </div>
-                )}
-
-                {stats.lastRecord?.verse_text && (
-                  <>
-                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
-                      Último versículo
-                    </div>
-                    <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 12, padding: 14, marginBottom: 24 }}>
-                      <p style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--text-verse)', lineHeight: 1.65, margin: '0 0 6px 0' }}>
-                        "{stats.lastRecord.verse_text}"
-                      </p>
-                      <p style={{ fontSize: 11, color: 'var(--ph-soft-text)', margin: 0 }}>
-                        {stats.lastRecord.verse_reference}
-                      </p>
-                    </div>
-                  </>
                 )}
 
                 <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
@@ -1063,13 +1047,6 @@
                           <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.6, margin: 0 }}>{val}</p>
                         </div>
                       ) : null)}
-                      {r.verse_text && (
-                        <div style={{ borderTop: '1px solid var(--divider)', paddingTop: 12, marginTop: 4 }}>
-                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ph-orange)', marginBottom: 6 }}>{r.verse_reference}</div>
-                          <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text-verse)', lineHeight: 1.7, margin: '0 0 8px 0' }}>"{r.verse_text}"</p>
-                          {r.verse_words && <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{r.verse_words}</p>}
-                        </div>
-                      )}
                       <button onClick={() => setConfirmDelete(r.id)} style={{
                         marginTop: 14, padding: '8px 14px', background: 'transparent',
                         border: '1px solid #E24B4A44', borderRadius: 8, color: '#E24B4A',
@@ -1352,7 +1329,6 @@
       const [selectedPatterns, setSelectedPatterns] = useState([]);
       const [activePatternTab, setActivePatternTab] = useState(0);
       const [anchorValue, setAnchorValue]       = useState(null);
-      const [verse, setVerse]                   = useState(null);
       const [loading, setLoading]               = useState(false);
       const [error, setError]                   = useState(null);
       const [saved, setSaved]                   = useState(false);
@@ -1373,84 +1349,43 @@
         setStep(1); setEmotion(null); setIntensity(null);
         setFeelings({ what: '', generated: '', managed: '' });
         setSelectedPatterns([]); setActivePatternTab(0);
-        setAnchorValue(null); setVerse(null);
+        setAnchorValue(null);
         setError(null); setLoading(false); setSaved(false);
       };
 
-      const fetchVerse = async (current) => {
-        setLoading(true); setError(null); setVerse(null); setSaved(false);
+      const saveRecord = async () => {
+        if (saved || loading) return;
+        setLoading(true); setError(null); setSaved(false);
 
-        const patternsText = current.patterns.length > 0
-          ? current.patterns.map(p => p.label).join(', ')
-          : 'ninguno identificado';
+        const anchorLabel = anchorValue
+          ? ALL_VALUES.find(v => v.id === anchorValue)?.label || anchorValue
+          : null;
 
-        const anchorText = current.anchor
-          ? ALL_VALUES.find(v => v.id === current.anchor)?.label || current.anchor
-          : 'ninguno seleccionado';
-
-        const prompt = `Eres un guía cálido y cercano que acompaña a un hombre en proceso de recuperación personal. Usa siempre el género masculino. Esta persona acaba de registrar lo siguiente:
-
-EMOCIÓN: ${current.emotion.name}
-INTENSIDAD: ${current.intensity}/10
-¿QUÉ PASÓ?: ${current.feelings.what}
-¿QUÉ GENERÓ EN ÉL?: ${current.feelings.generated}
-¿CÓMO LO GESTIONÓ?: ${current.feelings.managed}
-PATRONES QUE RECONOCIÓ EN SÍ MISMO HOY: ${patternsText}
-VALOR ANCLA QUE ELIGIÓ: ${anchorText}
-
-Lee CON MUCHA ATENCIÓN lo que escribió. Elige UN versículo de la Biblia Reina-Valera 1960 (RV1960) que hable DIRECTAMENTE a SU situación concreta — no a la emoción genérica, sino a lo específico que vivió y los patrones que reconoció en sí mismo.
-
-Luego escribe una explicación "En otras palabras" de 2-3 frases que conecte el versículo con lo que esa persona escribió hoy, mencionando el valor ancla que eligió si es relevante. Tono cálido, cercano, sin tecnicismos religiosos, sin moralizar. Que se sienta visto, no juzgado. Háblale de tú.
-
-Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o después:
-{"versiculo":"texto exacto del versículo en RV1960","referencia":"Libro Capítulo:Versículo","palabras":"explicación cálida y personal"}`;
+        const baseRecord = {
+          emotion_name:      emotion.name,
+          emotion_emoji:     emotion.emoji,
+          emotion_color:     emotion.color,
+          intensity:         intensity,
+          feeling_what:      feelings.what,
+          feeling_generated: feelings.generated,
+          feeling_managed:   feelings.managed,
+          values_selected:   anchorLabel ? [anchorLabel] : [],
+        };
 
         try {
-          const response = await fetch('/api/verse', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt }),
-          });
-          const data = await response.json();
-          if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-          const text  = data.content.map(i => i.text || '').join('\n');
-          const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
-          const parsed = JSON.parse(clean);
-          setVerse(parsed);
-
-          const anchorLabel = current.anchor
-            ? ALL_VALUES.find(v => v.id === current.anchor)?.label || current.anchor
-            : null;
-
-          const baseRecord = {
-            emotion_name:      current.emotion.name,
-            emotion_emoji:     current.emotion.emoji,
-            emotion_color:     current.emotion.color,
-            intensity:         current.intensity,
-            feeling_what:      current.feelings.what,
-            feeling_generated: current.feelings.generated,
-            feeling_managed:   current.feelings.managed,
-            values_selected:   anchorLabel ? [anchorLabel] : [],
-            verse_text:        parsed.versiculo,
-            verse_reference:   parsed.referencia,
-            verse_words:       parsed.palabras,
-          };
-
           const { error: dbError } = await db.from('registros').insert({
             ...baseRecord,
-            patterns_active: current.patterns.map(p => p.label),
+            patterns_active: selectedPatterns.map(p => p.label),
           });
-
           if (!dbError) {
             setSaved(true);
           } else {
             const { error: dbError2 } = await db.from('registros').insert(baseRecord);
             if (!dbError2) setSaved(true);
-            else console.error('Supabase error:', dbError2.message);
+            else setError('No se pudo guardar el registro. Inténtalo de nuevo.');
           }
-
         } catch (err) {
-          setError('No se pudo obtener el versículo. Inténtalo de nuevo.');
+          setError('No se pudo guardar el registro. Inténtalo de nuevo.');
         } finally {
           setLoading(false);
         }
@@ -1459,14 +1394,13 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
       const handleNext = () => {
         if (step < 5) {
           setStep(step + 1);
-        } else if (step === 5) {
-          setStep(6);
-          fetchVerse({ emotion, intensity, feelings, patterns: selectedPatterns, anchor: anchorValue });
+        } else if (step === 5 && !saved) {
+          saveRecord();
         }
       };
 
       const handleBack = () => {
-        if (step > 1 && step < 6) setStep(step - 1);
+        if (step > 1 && step < 5 && !saved) setStep(step - 1);
       };
 
       const suggestedValueIds = selectedPatterns.length > 0
@@ -1545,7 +1479,7 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
               </div>
 
               <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
-                {[1,2,3,4,5,6].map(n => (
+                {[1,2,3,4,5].map(n => (
                   <div key={n} style={{
                     flex: 1, height: 4, borderRadius: 4,
                     background: n <= step ? activeColor : 'var(--border)',
@@ -1680,8 +1614,77 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                   </>
                 )}
 
-                {/* Paso 5 — Presencia */}
+                {/* Paso 5 — Cierre */}
                 {step === 5 && (() => {
+                  if (loading) return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 0' }}>
+                      <div className="ej-pulse" style={{ fontSize: 48, lineHeight: 1 }}>✨</div>
+                      <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 20 }}>Guardando tu registro...</p>
+                    </div>
+                  );
+
+                  if (saved) {
+                    const anchorLabel = anchorValue ? ALL_VALUES.find(v => v.id === anchorValue)?.label : null;
+                    return (
+                      <>
+                        <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 24, lineHeight: 1 }}>{emotion.emoji}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span>{emotion.name}</span>
+                              <span style={{ fontSize: 11, color: activeColor, fontWeight: 600 }}>{intensity}/10</span>
+                            </div>
+                            {selectedPatterns.length > 0 && (
+                              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                                {selectedPatterns.map(p => p.label).join(' · ')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {selectedPatterns.length > 0 && (() => {
+                          const p = selectedPatterns[0];
+                          return (
+                            <div style={{ background: 'var(--card)', borderRadius: 14, padding: 16, border: `1px solid var(--border)`, borderLeft: `3px solid ${activeColor}`, marginBottom: 12 }}>
+                              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, fontWeight: 700, marginBottom: 8 }}>
+                                🧰 Recuerda tu herramienta · {p.label}
+                              </div>
+                              <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.65, margin: 0 }}>
+                                {p.tools[0]}
+                              </p>
+                            </div>
+                          );
+                        })()}
+
+                        <div style={{ background: `${activeColor}18`, border: `1px solid ${activeColor}35`, borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', gap: 8, color: activeColor, fontSize: 13, fontWeight: 500 }}>
+                          <span>✓</span>
+                          <span>Registro completado y guardado</span>
+                          <button className="ej-btn" onClick={() => setActiveTab('historial')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: activeColor, fontSize: 12, padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>
+                            Ver historial
+                          </button>
+                        </div>
+
+                        {navigator.share && (
+                          <button className="ej-btn" onClick={async () => {
+                            const patternsLabel = selectedPatterns.map(p => p.label).join(', ');
+                            try {
+                              await navigator.share({
+                                title: 'Hoja de sentimiento',
+                                text: `${emotion.emoji} ${emotion.name} · ${intensity}/10\n${patternsLabel ? `Patrón: ${patternsLabel}\n` : ''}\n¿Qué pasó?\n${feelings.what}\n\n¿Qué generó?\n${feelings.generated}\n\n¿Cómo lo gestioné?\n${feelings.managed}`,
+                              });
+                            } catch(e) {}
+                          }} style={{ width: '100%', marginTop: 10, padding: '13px 0', background: 'transparent', border: `1px solid ${activeColor}50`, borderRadius: 14, color: activeColor, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            <span>↗</span> Compartir hoja
+                          </button>
+                        )}
+
+                        {error && (
+                          <p style={{ color: '#E24B4A', fontSize: 13, textAlign: 'center', marginTop: 12 }}>{error}</p>
+                        )}
+                      </>
+                    );
+                  }
+
                   const fraseIdx = Math.floor(Math.random() * FRASES_MOTIVACIONALES.length);
                   const frase = FRASES_MOTIVACIONALES[fraseIdx];
                   return (
@@ -1719,7 +1722,6 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                         );
                       })()}
 
-                      {/* Tarjeta de presencia rotatoria */}
                       <div style={{
                         background: 'linear-gradient(135deg, var(--ph-soft-bg) 0%, var(--card) 100%)',
                         border: '1px solid var(--ph-soft-border)',
@@ -1758,129 +1760,23 @@ Responde ÚNICAMENTE en JSON puro, sin markdown, sin \`\`\`, sin texto antes o d
                           ))}
                         </div>
                       </div>
-
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.6 }}>
-                        Léelo. Respira. Cuando estés listo, recibe tu versículo.
-                      </p>
                     </>
                   );
                 })()}
-
-                {/* Paso 6 — Versículo */}
-                {step === 6 && (
-                  <>
-                    {loading && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 0' }}>
-                        <div className="ej-pulse" style={{ fontSize: 48, lineHeight: 1 }}>📖</div>
-                        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 20 }}>Buscando versículo en RV1960...</p>
-                      </div>
-                    )}
-
-                    {error && !loading && (
-                      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
-                        <p style={{ color: '#E24B4A', fontSize: 14, margin: '0 0 16px 0' }}>{error}</p>
-                        <button className="ej-btn"
-                          onClick={() => fetchVerse({ emotion, intensity, feelings, patterns: selectedPatterns, anchor: anchorValue })}
-                          style={{ padding: '12px 24px', background: activeColor, color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600 }}>
-                          Reintentar
-                        </button>
-                      </div>
-                    )}
-
-                    {verse && !loading && (
-                      <>
-                        <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--border)' }}>
-                          <span style={{ fontSize: 24, lineHeight: 1 }}>{emotion.emoji}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span>{emotion.name}</span>
-                              <span style={{ fontSize: 11, color: activeColor, fontWeight: 600 }}>{intensity}/10</span>
-                            </div>
-                            {selectedPatterns.length > 0 && (
-                              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
-                                {selectedPatterns.map(p => p.label).join(' · ')}
-                              </div>
-                            )}
-                            {anchorValue && (
-                              <div style={{ fontSize: 11, color: activeColor, marginTop: 2 }}>
-                                Ancla: {ALL_VALUES.find(v => v.id === anchorValue)?.emoji} {ALL_VALUES.find(v => v.id === anchorValue)?.label}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div style={{ background: 'var(--card)', borderRadius: 16, padding: 20, border: `1px solid var(--border)`, borderLeft: `3px solid ${activeColor}` }}>
-                          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, marginBottom: 14, fontWeight: 500 }}>
-                            {verse.referencia}
-                          </div>
-                          <p className="ej-serif" style={{ fontSize: 16, color: 'var(--text)', fontStyle: 'italic', lineHeight: 1.75, margin: 0 }}>
-                            {verse.versiculo}
-                          </p>
-                          <div style={{ height: 1, background: 'var(--divider)', margin: '20px 0' }} />
-                          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, marginBottom: 10, fontWeight: 500 }}>
-                            En otras palabras
-                          </div>
-                          <p style={{ fontSize: 13, color: 'var(--text-verse)', lineHeight: 1.7, margin: 0 }}>
-                            {verse.palabras}
-                          </p>
-                        </div>
-
-                        {selectedPatterns.length > 0 && (() => {
-                          const p = selectedPatterns[0];
-                          return (
-                            <div style={{ background: 'var(--card)', borderRadius: 14, padding: 16, border: `1px solid var(--border)`, borderLeft: `3px solid ${activeColor}`, marginTop: 12 }}>
-                              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, fontWeight: 700, marginBottom: 8 }}>
-                                🧰 Recuerda tu herramienta · {p.label}
-                              </div>
-                              <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.65, margin: 0 }}>
-                                {p.tools[0]}
-                              </p>
-                            </div>
-                          );
-                        })()}
-
-                        <div style={{ background: `${activeColor}18`, border: `1px solid ${activeColor}35`, borderRadius: 10, padding: 12, marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, color: activeColor, fontSize: 13, fontWeight: 500 }}>
-                          <span>✓</span>
-                          <span>Registro completado{saved ? ' y guardado' : ''}</span>
-                          {saved && (
-                            <button className="ej-btn" onClick={() => setActiveTab('historial')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: activeColor, fontSize: 12, padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>
-                              Ver historial
-                            </button>
-                          )}
-                        </div>
-
-                        {navigator.share && (
-                          <button className="ej-btn" onClick={async () => {
-                            const anchorLabel = anchorValue ? ALL_VALUES.find(v => v.id === anchorValue)?.label : null;
-                            const patternsLabel = selectedPatterns.map(p => p.label).join(', ');
-                            try {
-                              await navigator.share({
-                                title: 'Hoja de sentimiento',
-                                text: `${emotion.emoji} ${emotion.name} · ${intensity}/10\n${patternsLabel ? `Patrón: ${patternsLabel}\n` : ''}${anchorLabel ? `Ancla: ${anchorLabel}\n` : ''}\n¿Qué pasó?\n${feelings.what}\n\n¿Qué generó?\n${feelings.generated}\n\n¿Cómo lo gestioné?\n${feelings.managed}\n\n${verse.referencia}\n"${verse.versiculo}"`,
-                              });
-                            } catch(e) {}
-                          }} style={{ width: '100%', marginTop: 10, padding: '13px 0', background: 'transparent', border: `1px solid ${activeColor}50`, borderRadius: 14, color: activeColor, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            <span>↗</span> Compartir hoja
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </>
-                )}
               </div>
 
               <div style={{ marginTop: 28, display: 'flex', gap: 10 }}>
-                {step > 1 && step < 6 && (
+                {step > 1 && step < 5 && !saved && (
                   <button className="ej-btn" onClick={handleBack} style={{ padding: '15px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
                     Atrás
                   </button>
                 )}
-                {step < 6 && (
+                {!saved && !loading && (
                   <button className="ej-btn ej-main" disabled={!canContinue()} onClick={handleNext} style={{ flex: 1, padding: 15, borderRadius: 14, fontSize: 15, fontWeight: 600, background: canContinue() ? activeColor : 'var(--btn-off-bg)', color: canContinue() ? '#fff' : 'var(--btn-off-text)', border: 'none' }}>
-                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrón' : step === 5 ? '📖 Recibir versículo' : 'Continuar'}
+                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrón' : step === 5 ? '✓ Finalizar' : 'Continuar'}
                   </button>
                 )}
-                {step === 6 && !loading && verse && (
+                {saved && (
                   <button className="ej-btn" onClick={reset} style={{ flex: 1, padding: 15, background: 'transparent', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
                     Nuevo registro
                   </button>
