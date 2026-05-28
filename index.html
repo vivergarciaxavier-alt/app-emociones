@@ -243,6 +243,15 @@
 <body>
   <div id="root"></div>
 
+  <script>
+    window.addEventListener('error', function(e) {
+      var d = document.getElementById('root');
+      if (d && (!d.children.length || d.innerHTML.trim() === '')) {
+        d.innerHTML = '<div style="padding:30px;color:#ff6b6b;font-family:monospace;font-size:13px;background:#1a1a1a;min-height:100vh"><b>Error:</b><br>' + (e.message || 'Unknown') + '<br><br>File: ' + (e.filename || '') + '<br>Line: ' + (e.lineno || '') + '</div>';
+      }
+    });
+  </script>
+
   <script type="text/babel">
     const { useState, useEffect } = React;
 
@@ -331,20 +340,6 @@
       { id: 'autocuidado',     label: 'Autocuidado',      emoji: '❤️' },
     ];
 
-    const FRASES_MOTIVACIONALES = [
-      { texto: 'Estoy construyendo una persona nueva. Una persona de la que esté orgulloso — y de la que esté orgullosa mi familia.', icono: '🌱' },
-      { texto: 'Hago lo que me propongo aunque no tenga ganas.', icono: '🔁' },
-      { texto: 'Cada día mejor que ayer. Sin excepciones.', icono: '📈' },
-      { texto: 'Mi palabra vale. Soy un hombre de palabra.', icono: '🤝' },
-      { texto: 'Me hago cargo sin excusas.', icono: '🎯' },
-      { texto: 'No me dejo pisar, pero nunca piso a nadie.', icono: '⚖️' },
-      { texto: 'Me pongo primero sin culpa. Cuidarme es cuidar a los que quiero.', icono: '❤️' },
-      { texto: 'Familia es prioridad real, no solo de palabra.', icono: '🏠' },
-      { texto: 'Cero alcohol, cero drogas, cero tabaco. Cada día que pasa es una victoria.', icono: '🧘' },
-      { texto: 'Digo lo que pienso. No me miento.', icono: '💬' },
-      { texto: 'Aprendo algo nuevo cada día. La curiosidad me hace crecer.', icono: '🔍' },
-      { texto: 'Construyo una vida que realmente me apetezca vivir.', icono: '✨' },
-    ];
 
     const MY_PRINCIPLES = [
       { n: 1,  texto: 'Hago lo que me propongo aunque no tenga ganas.' },
@@ -408,20 +403,6 @@
         tools: ['Identifica si has reprimido emociones durante este tiempo — ¿cuáles?', 'Concreta más lo que sientes: describes mucho pero sientes poco. ¿Qué hay debajo?', '¿Te incomoda la parte emocional? Explora por qué y sin juicio.', 'Trabaja la expresión corporal: que lo que sientes se muestre en tu cuerpo.'] },
     ];
 
-    const STEP_NAMES = ['EMOCIÓN', 'INTENSIDAD', 'HOJA DE SENTIMIENTO', 'PATRÓN', 'CIERRE'];
-
-    const FEELING_FIELDS = [
-      { key: 'what',      label: '¿QUÉ PASÓ?',            placeholder: 'Describe la situación, el momento, el detonante…' },
-      { key: 'generated', label: '¿QUÉ GENERÓ EN TI?',    placeholder: 'Sensaciones físicas, pensamientos, recuerdos…'    },
-      { key: 'managed',   label: '¿CÓMO LO GESTIONASTE?', placeholder: 'Lo que hiciste, lo que evitaste, lo que necesitabas…' },
-    ];
-
-    function intensityLabel(n) {
-      if (n <= 3) return 'Leve — manejable';
-      if (n <= 6) return 'Moderada — merece atención';
-      if (n <= 8) return 'Intensa — regístrala bien';
-      return 'Muy alta — cuídate';
-    }
 
     function formatDate(dateStr) {
       const d = new Date(dateStr);
@@ -432,7 +413,7 @@
     }
 
     /* ── Tab Bar ── */
-    function TabBar({ activeTab, setActiveTab }) {
+    function TabBar({ activeTab, setActiveTab, onRegisterClick }) {
       const tabs = [
         { id: 'home',        icon: 'ti-home',    label: 'Inicio'    },
         { id: 'registro',    icon: 'ti-pencil',  label: 'Registro'  },
@@ -443,7 +424,8 @@
       return (
         <nav className="tab-bar">
           {tabs.map(t => (
-            <button key={t.id} className="tab-item" onClick={() => setActiveTab(t.id)}
+            <button key={t.id} className="tab-item"
+              onClick={() => t.id === 'registro' ? onRegisterClick() : setActiveTab(t.id)}
               style={{ color: activeTab === t.id ? 'var(--ph-orange)' : 'var(--text-secondary)' }}>
               <i className={`ti ${t.icon}`} aria-hidden="true" />
               <span>{t.label}</span>
@@ -479,10 +461,31 @@
             patterns_active:   [],
           });
           setSavedOk(true);
-          setTimeout(() => { onSaved(); onClose(); }, 1100);
+          if (onSaved) onSaved();
         } catch(e) {
           setSaving(false);
         }
+      };
+
+      const handleShare = async () => {
+        const lines = [
+          `${qEmotion.emoji} ${qEmotion.name.toUpperCase()} · ${qIntensity}/10`,
+          ``,
+        ];
+        if (qNote.trim()) {
+          lines.push(`¿Qué ha pasado?`);
+          lines.push(qNote.trim());
+          lines.push(``);
+        }
+        lines.push(`— Hoja de sentimiento · Mi Camino`);
+        try {
+          await navigator.share({ title: 'Hoja de sentimiento', text: lines.join('\n') });
+        } catch(e) {}
+      };
+
+      const handleNuevo = () => {
+        setQEmotion(null); setQIntensity(null); setQNote('');
+        setSaving(false); setSavedOk(false);
       };
 
       return (
@@ -496,19 +499,60 @@
             borderRadius: '20px 20px 0 0',
             padding: '20px 20px calc(28px + env(safe-area-inset-bottom))',
             animation: 'stepIn 0.25s ease-out',
-            maxHeight: '90vh', overflowY: 'auto',
+            maxHeight: '92vh', overflowY: 'auto',
           }}>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>⚡ Registro rápido</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>✏️ Registrar emoción</h3>
               <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: 'var(--text-secondary)', padding: '0 4px', lineHeight: 1 }}>×</button>
             </div>
 
             {savedOk ? (
-              <div style={{ textAlign: 'center', padding: '28px 0' }}>
-                <div style={{ fontSize: 44, marginBottom: 10 }}>✅</div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Guardado</p>
-              </div>
+              <>
+                {/* Confirmación */}
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 28 }}>{qEmotion.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{qEmotion.name} · {qIntensity}/10</div>
+                    {qNote.trim() && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>{qNote.trim()}</div>}
+                  </div>
+                </div>
+
+                <div style={{ background: `${qEmotion.color}18`, border: `1px solid ${qEmotion.color}35`, borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, color: qEmotion.color, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
+                  ✓ Registro guardado
+                </div>
+
+                {navigator.share && (
+                  <button onClick={handleShare} style={{
+                    width: '100%', padding: '13px', borderRadius: 12, marginBottom: 10,
+                    background: 'transparent', border: `1px solid ${qEmotion.color}50`,
+                    color: qEmotion.color, fontSize: 14, fontWeight: 500,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}>
+                    ↗ Compartir hoja de sentimiento
+                  </button>
+                )}
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={handleNuevo} style={{
+                    flex: 1, padding: '13px', borderRadius: 12,
+                    background: 'var(--ph-orange)', border: 'none',
+                    color: '#fff', fontSize: 14, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}>
+                    + Nuevo registro
+                  </button>
+                  <button onClick={onClose} style={{
+                    padding: '13px 18px', borderRadius: 12,
+                    background: 'transparent', border: '1px solid var(--border)',
+                    color: 'var(--text-secondary)', fontSize: 14,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}>
+                    Cerrar
+                  </button>
+                </div>
+              </>
             ) : (
               <>
                 {/* Emociones */}
@@ -554,19 +598,16 @@
                 <textarea
                   value={qNote}
                   onChange={e => setQNote(e.target.value)}
-                  maxLength={200}
-                  placeholder="Escribe brevemente el contexto…"
+                  placeholder="Escribe todo lo que quieras — qué pasó, qué sentiste, cómo lo gestionaste…"
                   style={{
                     width: '100%', padding: '12px', borderRadius: 10, fontSize: 14,
                     border: '1px solid var(--border)', background: 'var(--input-bg)',
-                    color: 'var(--text)', resize: 'none', height: 80,
+                    color: 'var(--text)', resize: 'none', height: 110,
                     fontFamily: 'inherit', lineHeight: 1.5, outline: 'none',
-                    caretColor: 'var(--ph-orange)',
+                    caretColor: 'var(--ph-orange)', boxSizing: 'border-box',
                   }}
                 />
-                <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--text-muted)', marginTop: 4, marginBottom: 16 }}>
-                  {qNote.length}/200
-                </div>
+                <div style={{ marginBottom: 16 }} />
 
                 {/* Guardar */}
                 <button
@@ -589,12 +630,251 @@
       );
     }
 
+    /* ── Revisión semanal guiada ── */
+    function WeeklyReviewModal({ darkMode, onClose }) {
+      const getISOWeek = (d) => {
+        const date = new Date(d); date.setHours(0,0,0,0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const w1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+      };
+      const now = new Date();
+      const weekKey = `revision_${now.getFullYear()}_W${getISOWeek(now)}`;
+
+      const [loading, setLoading] = React.useState(true);
+      const [weekData, setWeekData] = React.useState(null);
+      const [answers, setAnswers] = React.useState(['','','','']);
+      const [saved, setSaved] = React.useState(false);
+
+      React.useEffect(() => {
+        const stored = localStorage.getItem(weekKey);
+        if (stored) {
+          try { const p = JSON.parse(stored); setAnswers(p.answers || ['','','','']); } catch(e) {}
+        }
+        loadWeekData();
+      }, []);
+
+      const loadWeekData = async () => {
+        const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+        const { data } = await db.from('registros')
+          .select('emotion_name, emotion_emoji, intensity, patterns_active')
+          .gte('created_at', sevenAgo.toISOString());
+        if (!data || data.length === 0) { setWeekData(null); setLoading(false); return; }
+
+        const emotionCount = {};
+        data.forEach(r => {
+          if (r.emotion_name) {
+            const k = `${r.emotion_emoji || ''} ${r.emotion_name}`.trim();
+            emotionCount[k] = (emotionCount[k] || 0) + 1;
+          }
+        });
+        const topEmo = Object.entries(emotionCount).sort((a,b) => b[1]-a[1])[0];
+
+        const patCount = {};
+        data.forEach(r => (r.patterns_active || []).forEach(p => { patCount[p] = (patCount[p] || 0) + 1; }));
+        const topPat = Object.entries(patCount).sort((a,b) => b[1]-a[1])[0];
+
+        const avgIntensity = (data.reduce((s,r) => s + (r.intensity || 0), 0) / data.length).toFixed(1);
+        setWeekData({ total: data.length, topEmo, topPat, avgIntensity });
+        setLoading(false);
+      };
+
+      const updateAnswer = (i, val) => setAnswers(prev => prev.map((a, idx) => idx === i ? val : a));
+
+      const handleSave = async () => {
+        localStorage.setItem(weekKey, JSON.stringify({ answers, savedAt: new Date().toISOString() }));
+        setSaved(true);
+        setTimeout(() => { setSaved(false); }, 1800);
+      };
+
+      const handleShare = async () => {
+        const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+        const dateRange = `${sevenAgo.toLocaleDateString('es-ES', { day:'numeric', month:'short' })} – ${now.toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' })}`;
+        const lines = [
+          `🔄 REVISIÓN SEMANAL — Mi Camino`,
+          `${dateRange}`,
+          weekData ? `${weekData.total} registros · Intensidad media ${weekData.avgIntensity}/10` : '',
+          ``,
+        ];
+        const questions = [
+          weekData?.topEmo ? `Emoción principal (${weekData.topEmo[0]}, ${weekData.topEmo[1]}×)` : 'Emoción principal',
+          weekData?.topPat ? `Patrón activado (${weekData.topPat[0]}, ${weekData.topPat[1]}×)` : 'Patrón activado',
+          `Descripción emocional de la semana`,
+          `Lo que me llevo · Lo que quiero trabajar`,
+        ];
+        questions.forEach((q, i) => {
+          if (answers[i].trim()) { lines.push(`${i+1}. ${q}`); lines.push(answers[i].trim()); lines.push(''); }
+        });
+        lines.push(`— Mi Camino`);
+        try { await navigator.share({ title: 'Revisión semanal', text: lines.join('\n') }); } catch(e) {}
+      };
+
+      const questions = [
+        {
+          label: weekData?.topEmo
+            ? `Tu emoción más presente esta semana fue "${weekData.topEmo[0]}" (${weekData.topEmo[1]} ${weekData.topEmo[1]>1?'veces':'vez'})`
+            : 'Emoción más presente esta semana',
+          placeholder: '¿Qué hay detrás de ella? ¿Te resulta familiar?',
+        },
+        {
+          label: weekData?.topPat
+            ? `Activaste el patrón "${weekData.topPat[0]}" ${weekData.topPat[1]} ${weekData.topPat[1]>1?'veces':'vez'}`
+            : 'Patrón más activado',
+          placeholder: '¿Cómo lo gestionaste? ¿Usaste alguna herramienta del PTI?',
+        },
+        {
+          label: weekData
+            ? `Tu intensidad media fue ${weekData.avgIntensity}/10`
+            : 'Intensidad emocional de la semana',
+          placeholder: '¿Cómo describirías la semana emocionalmente?',
+        },
+        {
+          label: '¿Qué te llevas?',
+          placeholder: '¿Qué aprendizaje o insight te llevas? ¿Qué quieres trabajar la próxima semana?',
+        },
+      ];
+
+      const overlayStyle = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' };
+      const sheetStyle = { background: 'var(--card)', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 500, maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 30px rgba(0,0,0,0.25)' };
+
+      return (
+        <div style={overlayStyle} onClick={e => e.target === e.currentTarget && onClose()}>
+          <div style={sheetStyle}>
+            {/* Header */}
+            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--divider)', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)' }}>🔄 Revisión semanal</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    {loading ? 'Cargando…' : weekData ? `${weekData.total} registros · Intensidad media ${weekData.avgIntensity}/10` : 'Sin registros esta semana'}
+                  </div>
+                </div>
+                <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--text-muted)', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>×</button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '16px 20px' }}>
+              {loading && <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)', fontSize: 13 }}>Cargando datos de la semana…</div>}
+
+              {!loading && !weekData && (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                  <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>Sin registros esta semana</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>Haz algún registro para poder hacer la revisión</div>
+                </div>
+              )}
+
+              {!loading && weekData && questions.map((q, i) => (
+                <div key={i} style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ph-orange)', marginBottom: 6, lineHeight: 1.4 }}>{i+1}. {q.label}</div>
+                  <textarea
+                    value={answers[i]}
+                    onChange={e => updateAnswer(i, e.target.value)}
+                    placeholder={q.placeholder}
+                    rows={3}
+                    style={{
+                      width: '100%', background: 'var(--input-bg)', border: '1px solid var(--border)',
+                      borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)',
+                      fontFamily: 'inherit', resize: 'none', outline: 'none', boxSizing: 'border-box',
+                      lineHeight: 1.5,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            {!loading && weekData && (
+              <div style={{ padding: '14px 20px', borderTop: '1px solid var(--divider)', display: 'flex', gap: 10, flexShrink: 0 }}>
+                <button onClick={handleSave} style={{
+                  flex: 1, padding: '12px 0', background: saved ? '#4CAF50' : 'var(--input-bg)',
+                  border: `1px solid ${saved ? '#4CAF50' : 'var(--border)'}`, borderRadius: 12,
+                  fontSize: 14, color: saved ? '#fff' : 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
+                  transition: 'all 0.3s',
+                }}>{saved ? '✓ Guardado' : '💾 Guardar'}</button>
+                <button onClick={handleShare} style={{
+                  flex: 2, padding: '12px 0', background: 'var(--ph-orange)', border: 'none',
+                  borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}>📤 Compartir con terapeuta</button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     /* ── Pantalla Home ── */
-    function HomeScreen({ setActiveTab, darkMode, setDarkMode, ptiConfig }) {
+    function HomeScreen({ setActiveTab, darkMode, setDarkMode, ptiConfig, onRegisterClick }) {
+      const todayStr = new Date().toISOString().slice(0, 10);
       const [stats, setStats] = useState(null);
       const [loadingStats, setLoadingStats] = useState(true);
       const [weekRecords, setWeekRecords] = useState([]);
-      const [showQuick, setShowQuick] = useState(false);
+      const [showWeeklyReview, setShowWeeklyReview] = useState(false);
+
+      // Los 7 mandamientos — uno por día de la semana
+      const MANDAMIENTOS = [
+        { dia: 'Lunes',     titulo: 'Sobriedad',    icono: '🧘', texto: 'Cero alcohol, cero drogas, cero tabaco. Cada día que pasa sin ceder es una victoria real.' },
+        { dia: 'Martes',    titulo: 'Constancia',   icono: '🔁', texto: 'Hago lo que me propuse. Especialmente cuando no tengo ganas. Sobre todo cuando no tengo ganas.' },
+        { dia: 'Miércoles', titulo: 'Integridad',   icono: '⚖️', texto: 'Soy lo que digo que soy. Mi palabra y mis actos van en la misma dirección.' },
+        { dia: 'Jueves',    titulo: 'Familia',      icono: '🏠', texto: 'Familia es prioridad real, no solo de palabra. Lo demuestro con lo que hago, no con lo que digo.' },
+        { dia: 'Viernes',   titulo: 'Límites',      icono: '🚫', texto: 'Poner límites no es hacerle daño al otro. Es respetarme a mí mismo.' },
+        { dia: 'Sábado',    titulo: 'Autocuidado',  icono: '❤️', texto: 'Me pongo primero sin culpa. Cuidarme es cuidar a los que quiero.' },
+        { dia: 'Domingo',   titulo: 'Presencia',    icono: '🌿', texto: 'Antes de reaccionar, paro. Elijo desde dónde respondo. No soy mis impulsos.' },
+      ];
+      // getDay(): 0=domingo,1=lunes...6=sábado → mapeamos a nuestro array (lunes=0)
+      const rawDay = new Date().getDay();
+      const mandamientoHoy = MANDAMIENTOS[rawDay === 0 ? 6 : rawDay - 1];
+
+      // Check if weekly review already done this week (ISO week, matches WeeklyReviewModal)
+      const getWeekKey = () => {
+        const d = new Date(); d.setHours(0,0,0,0);
+        const tmp = new Date(d); tmp.setDate(tmp.getDate() + 3 - (tmp.getDay() + 6) % 7);
+        const w1 = new Date(tmp.getFullYear(), 0, 4);
+        const week = 1 + Math.round(((tmp - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+        return `revision_${tmp.getFullYear()}_W${week}`;
+      };
+      const weeklyReviewDone = !!localStorage.getItem(getWeekKey());
+
+      // ── Hábitos del día ──
+      const HABITS_DEF = [
+        { id: 'sobriedad',  emoji: '🧘', label: 'Sobriedad' },
+        { id: 'ejercicio',  emoji: '🏃', label: 'Ejercicio' },
+        { id: 'registro',   emoji: '✏️', label: 'Registro emocional', auto: true },
+        { id: 'familia',    emoji: '🏠', label: 'Tiempo en familia' },
+        { id: 'aprendizaje',emoji: '🛠️', label: 'Proyectos' },
+        { id: 'camion',     emoji: '🚛', label: 'Test camión' },
+      ];
+
+      const habitKey = (dateStr) => `habitos_${dateStr}`;
+      const todayHabitKey = habitKey(todayStr);
+
+      const [habits, setHabits] = useState(() => {
+        try { return JSON.parse(localStorage.getItem(todayHabitKey)) || {}; } catch(e) { return {}; }
+      });
+
+      const toggleHabit = (id) => {
+        setHabits(prev => {
+          const next = { ...prev, [id]: !prev[id] };
+          localStorage.setItem(todayHabitKey, JSON.stringify(next));
+          return next;
+        });
+      };
+
+      const getHabitStreak = (id) => {
+        let streak = 0;
+        const d = new Date();
+        for (let i = 0; i < 60; i++) {
+          d.setDate(d.getDate() - (i === 0 ? 0 : 1));
+          const key = habitKey(d.toISOString().slice(0, 10));
+          try {
+            const data = JSON.parse(localStorage.getItem(key));
+            if (data && data[id]) { streak++; } else { break; }
+          } catch(e) { break; }
+        }
+        return streak;
+      };
 
       useEffect(() => { loadStats(); }, []);
 
@@ -613,15 +893,17 @@
         if (data) {
           const weekData = data.filter(r => new Date(r.created_at) >= sevenAgo);
 
-          const patternCount = {};
+          const emotionCount = {};
           weekData.forEach(r => {
-            if (r.patterns_active && r.patterns_active.length) {
-              r.patterns_active.forEach(p => { patternCount[p] = (patternCount[p] || 0) + 1; });
+            if (r.emotion_name) {
+              const key = r.emotion_name;
+              if (!emotionCount[key]) emotionCount[key] = { count: 0, emoji: r.emotion_emoji || '', color: r.emotion_color || 'var(--ph-orange)' };
+              emotionCount[key].count++;
             }
           });
-          const topPatterns = Object.entries(patternCount)
-            .sort((a, b) => b[1] - a[1]).slice(0, 3)
-            .map(([name, count]) => ({ name, count }));
+          const topEmotions = Object.entries(emotionCount)
+            .sort((a, b) => b[1].count - a[1].count).slice(0, 4)
+            .map(([name, v]) => ({ name, count: v.count, emoji: v.emoji, color: v.color }));
 
           const days = new Set(data.map(r => new Date(r.created_at).toLocaleDateString('es-ES')));
           let streak = 0;
@@ -633,12 +915,16 @@
           }
 
           setWeekRecords(weekData);
-          setStats({ weekCount: weekData.length, topPatterns, streak, lastRecord: data[0] || null });
+          setStats({ weekCount: weekData.length, topEmotions, streak, lastRecord: data[0] || null });
+
         }
         setLoadingStats(false);
       };
 
-      const prepareSession = async () => {
+      const [showSessionPreview, setShowSessionPreview] = useState(false);
+      const [sessionData, setSessionData] = useState(null);
+
+      const prepareSession = () => {
         const sevenAgo = new Date();
         sevenAgo.setDate(sevenAgo.getDate() - 7);
         const today = new Date();
@@ -647,74 +933,71 @@
         const emotionCount = {};
         weekRecords.forEach(r => {
           if (r.emotion_name) {
-            const key = `${r.emotion_emoji || ''} ${r.emotion_name}`.trim();
-            emotionCount[key] = (emotionCount[key] || 0) + 1;
+            const key = r.emotion_name;
+            if (!emotionCount[key]) emotionCount[key] = { count: 0, emoji: r.emotion_emoji || '' };
+            emotionCount[key].count++;
           }
         });
-        const topEmotions = Object.entries(emotionCount).sort((a, b) => b[1] - a[1]);
-
-        const patternCount = {};
-        weekRecords.forEach(r => {
-          if (r.patterns_active && r.patterns_active.length) {
-            r.patterns_active.forEach(p => { patternCount[p] = (patternCount[p] || 0) + 1; });
-          }
-        });
-        const topPats = Object.entries(patternCount).sort((a, b) => b[1] - a[1]);
-
-        const valSet = new Set();
-        weekRecords.forEach(r => {
-          if (r.values_selected && r.values_selected.length) {
-            r.values_selected.forEach(v => valSet.add(v));
-          }
-        });
+        const topEmotions = Object.entries(emotionCount).sort((a, b) => b[1].count - a[1].count)
+          .map(([name, v]) => ({ name, count: v.count, emoji: v.emoji }));
 
         const maxRecord = weekRecords.reduce((max, r) => (!max || r.intensity > max.intensity ? r : max), null);
 
+        // Leer revisión semanal si existe
+        const getISOWeek = (d) => {
+          const date = new Date(d); date.setHours(0,0,0,0);
+          date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+          const w1 = new Date(date.getFullYear(), 0, 4);
+          return 1 + Math.round(((date - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+        };
+        const weekKey = `revision_${today.getFullYear()}_W${getISOWeek(today)}`;
+        let revisionAnswers = null;
+        try {
+          const stored = localStorage.getItem(weekKey);
+          if (stored) revisionAnswers = JSON.parse(stored)?.answers || null;
+        } catch(e) {}
+
+        setSessionData({ dateRange, topEmotions, maxRecord, revisionAnswers, total: weekRecords.length });
+        setShowSessionPreview(true);
+      };
+
+      const shareSession = async () => {
+        if (!sessionData) return;
+        const { dateRange, topEmotions, maxRecord, revisionAnswers, total } = sessionData;
         const lines = [
-          `📋 RESUMEN SEMANAL — Projecte Home`,
-          `${dateRange}`,
+          `📋 SESIÓN DE TERAPIA — Mi Camino`,
+          dateRange,
           ``,
-          `📊 ${weekRecords.length} registro${weekRecords.length !== 1 ? 's' : ''} esta semana`,
+          `📊 ${total} registro${total !== 1 ? 's' : ''} esta semana`,
           ``,
         ];
-
         if (topEmotions.length) {
           lines.push(`😤 EMOCIONES`);
-          topEmotions.forEach(([name, count]) => {
-            lines.push(`• ${name} (${count} ${count !== 1 ? 'veces' : 'vez'})`);
-          });
+          topEmotions.forEach(e => lines.push(`• ${e.emoji} ${e.name} (${e.count}×)`));
           lines.push(``);
         }
-
-        if (topPats.length) {
-          lines.push(`🔄 PATRONES ACTIVADOS`);
-          topPats.forEach(([name, count]) => {
-            lines.push(`• ${name} (${count} ${count !== 1 ? 'veces' : 'vez'})`);
-          });
-          lines.push(``);
-        }
-
         if (maxRecord) {
           const d = new Date(maxRecord.created_at);
           const dateStr = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-          lines.push(`⭐ REGISTRO MÁS INTENSO`);
+          lines.push(`⭐ MOMENTO MÁS INTENSO`);
           lines.push(`${maxRecord.emotion_emoji || ''} ${maxRecord.emotion_name} · ${maxRecord.intensity}/10 — ${dateStr}`);
+          if (maxRecord.feeling_what) lines.push(maxRecord.feeling_what);
           lines.push(``);
         }
-
-        if (valSet.size) {
-          lines.push(`❤️ VALORES PRACTICADOS`);
-          lines.push(Array.from(valSet).join(', '));
+        if (revisionAnswers && revisionAnswers.some(a => a.trim())) {
+          lines.push(`🔄 REVISIÓN SEMANAL`);
+          const qs = ['Emoción principal', 'Patrón activado', 'Cómo describo la semana', 'Lo que me llevo'];
+          revisionAnswers.forEach((a, i) => {
+            if (a.trim()) { lines.push(`${qs[i]}: ${a.trim()}`); }
+          });
           lines.push(``);
         }
-
-        lines.push(`— Preparado con Projecte Home`);
+        lines.push(`— Preparado con Mi Camino`);
         const text = lines.join('\n');
-
         if (navigator.share) {
-          try { await navigator.share({ title: 'Resumen semanal', text }); } catch(e) {}
+          try { await navigator.share({ title: 'Sesión de terapia', text }); } catch(e) {}
         } else {
-          try { await navigator.clipboard.writeText(text); } catch(e) {}
+          try { await navigator.clipboard.writeText(text); alert('Copiado al portapapeles'); } catch(e) {}
         }
       };
 
@@ -725,127 +1008,316 @@
         <>
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
           <div className="ej-container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+
+            {/* ── Header ── */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                Projecte Home
+                Mi Camino
               </span>
               <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
                 {darkMode ? '☀️' : '🌙'}
               </button>
             </div>
 
-            <h1 style={{ fontSize: 28, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>
-              {greeting}, Xavi
-            </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
-              {!loadingStats && stats ? (stats.streak > 0 ? `Llevas ${stats.streak} día${stats.streak > 1 ? 's' : ''} registrando` : 'Empieza tu registro de hoy') : ' '}
-            </p>
+            {/* ── Saludo + stats inline ── */}
+            <div style={{ marginBottom: 14 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>
+                {greeting}, Xavi
+              </h1>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 6px 0' }}>
+                {!loadingStats && stats
+                  ? `${stats.weekCount} registro${stats.weekCount !== 1 ? 's' : ''} esta semana · ${stats.streak} día${stats.streak !== 1 ? 's' : ''} de racha`
+                  : ' '}
+              </p>
+              {(() => {
+                const inicio = new Date(2025, 7, 28); // 7 = agosto (0-indexed), hora local
+                const hoy = new Date(); hoy.setHours(0,0,0,0);
+                const dias = Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
+                let meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
+                if (hoy.getDate() < inicio.getDate()) meses--;
+                const base = new Date(inicio); base.setMonth(base.getMonth() + meses);
+                const diasRest = Math.floor((hoy - base) / (1000 * 60 * 60 * 24));
+                const restoStr = diasRest > 0 ? ` y ${diasRest} día${diasRest !== 1 ? 's' : ''}` : '';
+                return (
+                  <span style={{
+                    fontSize: 12, color: 'var(--text-secondary)',
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                  }}>
+                    💪 {dias} días · {meses} meses{restoStr}
+                  </span>
+                );
+              })()}
+            </div>
 
-            <button onClick={() => setActiveTab('registro')} style={{
-              width: '100%', padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+            {/* ── Mandamiento compacto ── */}
+            <div style={{
+              background: 'var(--card)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: '11px 14px', marginBottom: 14,
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+            }}>
+              <span style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{mandamientoHoy.icono}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ph-orange)' }}>{mandamientoHoy.titulo}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>· {mandamientoHoy.dia}</span>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text)', margin: 0, lineHeight: 1.45, fontStyle: 'italic',
+                  overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical',
+                }}>
+                  "{mandamientoHoy.texto}"
+                </p>
+              </div>
+            </div>
+
+            {/* ── Hábitos de hoy — grid prominente ── */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
+                Hábitos de hoy
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 }}>
+                {HABITS_DEF.map((h) => {
+                  const done = !!habits[h.id];
+                  const streak = getHabitStreak(h.id);
+                  return (
+                    <div key={h.id} onClick={() => toggleHabit(h.id)} style={{
+                      background: done ? 'rgba(242,101,34,0.10)' : 'var(--card)',
+                      border: `1.5px solid ${done ? 'var(--ph-orange)' : 'var(--border)'}`,
+                      borderRadius: 12, padding: '10px 6px 8px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                      cursor: 'pointer', transition: 'all 0.18s', textAlign: 'center',
+                      position: 'relative',
+                    }}>
+                      {done && (
+                        <div style={{
+                          position: 'absolute', top: 5, right: 6,
+                          width: 14, height: 14, borderRadius: 7,
+                          background: 'var(--ph-orange)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <span style={{ color: 'white', fontSize: 9, lineHeight: 1 }}>✓</span>
+                        </div>
+                      )}
+                      <span style={{ fontSize: 24, opacity: done ? 1 : 0.45 }}>{h.emoji}</span>
+                      <span style={{ fontSize: 10, color: done ? 'var(--text)' : 'var(--text-secondary)', fontWeight: done ? 600 : 400, lineHeight: 1.3 }}>
+                        {h.label}
+                      </span>
+                      {streak > 0 && (
+                        <span style={{ fontSize: 10, color: 'var(--ph-orange)', fontWeight: 700 }}>🔥{streak}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Botón principal ── */}
+            <button onClick={onRegisterClick} style={{
+              width: '100%', padding: '13px 16px', borderRadius: 12, cursor: 'pointer',
               background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)',
               color: 'var(--ph-soft-text)', fontSize: 15, fontWeight: 500,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               fontFamily: 'inherit', marginBottom: 8, transition: 'all 0.2s',
             }}>
               ✏️ Registrar emoción
             </button>
 
-            <button onClick={() => setShowQuick(true)} style={{
-              width: '100%', padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-              background: 'transparent', border: '1px solid var(--border)',
-              color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              fontFamily: 'inherit', marginBottom: 10, transition: 'all 0.2s',
-            }}>
-              ⚡ Registro rápido
-            </button>
-
-            {!loadingStats && stats && stats.weekCount > 0 && (
-              <button onClick={prepareSession} style={{
-                width: '100%', padding: '13px 16px', borderRadius: 12, cursor: 'pointer',
-                background: 'transparent', border: '1px solid var(--border)',
-                color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                fontFamily: 'inherit', marginBottom: 24, transition: 'all 0.2s',
+            {/* ── Botones secundarios side-by-side ── */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {!loadingStats && stats && stats.weekCount > 0 && (
+                <button onClick={prepareSession} style={{
+                  flex: 1, padding: '10px 8px', borderRadius: 12, cursor: 'pointer',
+                  background: 'transparent', border: '1px solid var(--border)',
+                  color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  fontFamily: 'inherit', transition: 'all 0.2s',
+                }}>
+                  📋 Sesión de terapia
+                </button>
+              )}
+              <button onClick={() => setShowWeeklyReview(true)} style={{
+                flex: 1, padding: '10px 8px', borderRadius: 12, cursor: 'pointer',
+                background: weeklyReviewDone ? 'transparent' : 'rgba(242,101,34,0.08)',
+                border: weeklyReviewDone ? '1px solid var(--border)' : '1px solid rgba(242,101,34,0.3)',
+                color: weeklyReviewDone ? 'var(--text-secondary)' : 'var(--ph-orange)',
+                fontSize: 12, fontWeight: 500,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                fontFamily: 'inherit', transition: 'all 0.2s',
               }}>
-                📋 Preparar sesión de terapia
+                {weeklyReviewDone ? '✅' : '🔄'} Revisión semanal
+                {!weeklyReviewDone && (
+                  <span style={{ fontSize: 9, background: 'var(--ph-orange)', color: 'white', borderRadius: 8, padding: '1px 5px', fontWeight: 700 }}>!</span>
+                )}
               </button>
-            )}
-            {(loadingStats || !stats || stats.weekCount === 0) && (
-              <div style={{ marginBottom: 24 }} />
-            )}
+            </div>
 
-            {loadingStats && (
-              <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)', fontSize: 13 }}>
-                Cargando…
+            {/* ── Próximos hitos ── */}
+            {(() => {
+              const inicio = new Date(2025, 7, 28);
+              const hoy = new Date(); hoy.setHours(0,0,0,0);
+              const diasTotales = Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
+              const hitos = [
+                { dias: 300,  emoji: '🎯', label: '300 días' },
+                { dias: 365,  emoji: '🏆', label: '1 año' },
+                { dias: 500,  emoji: '💎', label: '500 días' },
+                { dias: 730,  emoji: '🌟', label: '2 años' },
+              ];
+              const proximos = hitos.filter(h => h.dias > diasTotales).slice(0, 2);
+              if (!proximos.length) return null;
+              return (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
+                    Próximos hitos
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {proximos.map(h => {
+                      const faltan = h.dias - diasTotales;
+                      const fecha = new Date(inicio);
+                      fecha.setDate(fecha.getDate() + h.dias);
+                      const fechaStr = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                      const pct = Math.round((diasTotales / h.dias) * 100);
+                      return (
+                        <div key={h.dias} style={{
+                          flex: 1, background: 'var(--card)', border: '1px solid var(--border)',
+                          borderRadius: 12, padding: '12px 14px', overflow: 'hidden', position: 'relative',
+                        }}>
+                          <div style={{
+                            position: 'absolute', bottom: 0, left: 0,
+                            width: `${pct}%`, height: 3,
+                            background: 'var(--ph-orange)', borderRadius: '0 2px 0 0',
+                            transition: 'width 0.4s ease',
+                          }} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                            <span style={{ fontSize: 16 }}>{h.emoji}</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{h.label}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--ph-orange)', fontWeight: 600, marginBottom: 2 }}>
+                            {faltan === 1 ? '¡Mañana!' : `en ${faltan} días`}
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{fechaStr} · {pct}%</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── Emociones esta semana — chips ── */}
+            {!loadingStats && stats && stats.topEmotions && stats.topEmotions.length > 0 && (
+              <div>
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
+                  Emociones esta semana
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {stats.topEmotions.map(e => (
+                    <div key={e.name} style={{
+                      background: 'var(--card)', border: '1px solid var(--border)',
+                      borderRadius: 20, padding: '5px 11px',
+                      display: 'flex', alignItems: 'center', gap: 5,
+                    }}>
+                      <span style={{ fontSize: 14 }}>{e.emoji}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text)' }}>{e.name}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{e.count}×</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {!loadingStats && stats && (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
-                  <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: 26, fontWeight: 500, color: 'var(--ph-orange)', marginBottom: 2 }}>{stats.weekCount}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>registros esta semana</div>
-                  </div>
-                  <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: 26, fontWeight: 500, color: 'var(--ph-navy)', marginBottom: 2 }}>{stats.streak}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>días de racha</div>
-                  </div>
-                </div>
-
-                {stats.topPatterns.length > 0 && (
-                  <>
-                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
-                      Patrones activos esta semana
-                    </div>
-                    <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', marginBottom: 24, overflow: 'hidden' }}>
-                      {stats.topPatterns.map((p, i) => {
-                        const pd = PATTERNS.find(x => x.label === p.name);
-                        return (
-                          <div key={p.name} style={{
-                            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                            borderBottom: i < stats.topPatterns.length - 1 ? '1px solid var(--border)' : 'none',
-                          }}>
-                            <span style={{ fontSize: 18 }}>{pd?.emoji || '•'}</span>
-                            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)', background: 'var(--ph-soft-bg)', padding: '2px 8px', borderRadius: 20, border: '1px solid var(--ph-soft-border)', color: 'var(--ph-soft-text)' }}>{p.count}×</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-
-                {stats.topPatterns.length === 0 && (
-                  <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 24, textAlign: 'center' }}>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Aún no hay patrones esta semana.<br/>¡Haz tu primer registro!</p>
-                  </div>
-                )}
-
-                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, fontWeight: 500 }}>
-                  Tus fortalezas
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {(ptiConfig?.strengths || DEFAULT_STRENGTHS).map(f => (
-                    <div key={f} style={{
-                      background: 'var(--card)', border: '1px solid var(--border)',
-                      borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'var(--text)',
-                    }}>{f}</div>
-                  ))}
-                </div>
-              </>
-            )}
           </div>
         </div>
 
-        {showQuick && (
-          <QuickRegisterModal
+        {showWeeklyReview && (
+          <WeeklyReviewModal
             darkMode={darkMode}
-            onClose={() => setShowQuick(false)}
-            onSaved={() => { setShowQuick(false); loadStats(); }}
+            onClose={() => setShowWeeklyReview(false)}
           />
+        )}
+
+        {showSessionPreview && sessionData && (
+          <div onClick={(e) => { if (e.target === e.currentTarget) setShowSessionPreview(false); }} style={{
+            position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--modal-bg)',
+            display: 'flex', alignItems: 'flex-end',
+          }}>
+            <div style={{
+              width: '100%', background: 'var(--modal-card)', borderRadius: '20px 20px 0 0',
+              padding: '20px 20px calc(28px + env(safe-area-inset-bottom))',
+              maxHeight: '88vh', overflowY: 'auto',
+              animation: 'stepIn 0.25s ease-out',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)', margin: 0 }}>📋 Sesión de terapia</h3>
+                <button onClick={() => setShowSessionPreview(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: 'var(--text-secondary)', lineHeight: 1 }}>×</button>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 20 }}>{sessionData.dateRange}</p>
+
+              {/* Registros */}
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 22 }}>📊</span>
+                <span style={{ fontSize: 14, color: 'var(--text)' }}>{sessionData.total} registro{sessionData.total !== 1 ? 's' : ''} esta semana</span>
+              </div>
+
+              {/* Emociones */}
+              {sessionData.topEmotions.length > 0 && (
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 10 }}>😤 Emociones</div>
+                  {sessionData.topEmotions.map(e => (
+                    <div key={e.name} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      <span style={{ fontSize: 18 }}>{e.emoji}</span>
+                      <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{e.name}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{e.count}×</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Momento más intenso */}
+              {sessionData.maxRecord && (
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 8 }}>⭐ Momento más intenso</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>
+                    {sessionData.maxRecord.emotion_emoji} {sessionData.maxRecord.emotion_name} · {sessionData.maxRecord.intensity}/10
+                  </div>
+                  {sessionData.maxRecord.feeling_what && (
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{sessionData.maxRecord.feeling_what}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Revisión semanal */}
+              {sessionData.revisionAnswers && sessionData.revisionAnswers.some(a => a.trim()) && (
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--ph-orange)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ph-orange)', fontWeight: 600, marginBottom: 10 }}>🔄 Revisión semanal</div>
+                  {['Emoción principal', 'Patrón activado', 'Cómo describo la semana', 'Lo que me llevo'].map((q, i) => (
+                    sessionData.revisionAnswers[i]?.trim() ? (
+                      <div key={i} style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>{q}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>{sessionData.revisionAnswers[i]}</div>
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+              )}
+
+              {!sessionData.revisionAnswers && (
+                <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
+                  <p style={{ fontSize: 12, color: 'var(--ph-soft-text)', margin: 0 }}>
+                    💡 Haz la revisión semanal antes de la sesión para enriquecer este resumen.
+                  </p>
+                </div>
+              )}
+
+              <button onClick={shareSession} style={{
+                width: '100%', padding: '14px', borderRadius: 12, marginTop: 4,
+                background: 'var(--ph-orange)', border: 'none',
+                color: '#fff', fontSize: 15, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}>
+                ↗ Compartir con terapeuta
+              </button>
+            </div>
+          </div>
         )}
         </>
       );
@@ -2025,7 +2497,7 @@
         { key: 'extraescolares', label: 'Extraescolares'      },
         { key: 'mantenimiento',  label: 'Mantenimiento'       },
         { key: 'tabaco',         label: 'Tabaco'              },
-        { key: 'projecte_home',  label: 'Projecte Home'       },
+        { key: 'projecte_home',  label: 'Mi Camino'       },
         { key: 'otros_gas',      label: 'Otros gastos'        },
       ];
       const GASTOS_KEYS = [...GASTOS_FIJOS_KEYS, ...GASTOS_VARIABLES_KEYS];
@@ -2205,7 +2677,7 @@
         const ingRows = INGRESOS_KEYS.filter(({key}) => ingresos[key].est || ingresos[key].real);
         const gasRows = GASTOS_KEYS.filter(({key}) => gastos[key].est || gastos[key].real);
         const lines = [
-          `📊 PRESUPUESTO · Projecte Home`,
+          `📊 PRESUPUESTO · Mi Camino`,
           `${MESES[mes-1]} ${anio} — Cierre mensual`,
           ``,
           `📥 INGRESOS`,
@@ -2262,7 +2734,7 @@
         const ingRows = INGRESOS_KEYS.filter(({key}) => ingresos[key].est);
         const gasRows = GASTOS_KEYS.filter(({key}) => gastos[key].est);
         const lines = [
-          `📋 PRESUPUESTO · Projecte Home`,
+          `📋 PRESUPUESTO · Mi Camino`,
           `${MESES[mes-1]} ${anio} — Estimado`,
           ``,
           `📥 INGRESOS`,
@@ -2585,16 +3057,7 @@
     function App() {
       const [darkMode, setDarkMode]             = useState(false);
       const [activeTab, setActiveTab]           = useState('home');
-      const [step, setStep]                     = useState(1);
-      const [emotion, setEmotion]               = useState(null);
-      const [intensity, setIntensity]           = useState(null);
-      const [feelings, setFeelings]             = useState({ what: '', generated: '', managed: '' });
-      const [selectedPatterns, setSelectedPatterns] = useState([]);
-      const [activePatternTab, setActivePatternTab] = useState(0);
-      const [anchorValue, setAnchorValue]       = useState(null);
-      const [loading, setLoading]               = useState(false);
-      const [error, setError]                   = useState(null);
-      const [saved, setSaved]                   = useState(false);
+      const [showRegModal, setShowRegModal]     = useState(false);
       const [ptiConfig, setPTIConfig]           = useState(null);
 
       useEffect(() => {
@@ -2616,458 +3079,49 @@
         localStorage.setItem('ej_dark_mode', darkMode);
       }, [darkMode]);
 
-      const reset = () => {
-        setStep(1); setEmotion(null); setIntensity(null);
-        setFeelings({ what: '', generated: '', managed: '' });
-        setSelectedPatterns([]); setActivePatternTab(0);
-        setAnchorValue(null);
-        setError(null); setLoading(false); setSaved(false);
-      };
-
-      const saveRecord = async () => {
-        if (saved || loading) return;
-        setLoading(true); setError(null); setSaved(false);
-
-        const anchorLabel = anchorValue
-          ? ALL_VALUES.find(v => v.id === anchorValue)?.label || anchorValue
-          : null;
-
-        const baseRecord = {
-          emotion_name:      emotion.name,
-          emotion_emoji:     emotion.emoji,
-          emotion_color:     emotion.color,
-          intensity:         intensity,
-          feeling_what:      feelings.what,
-          feeling_generated: feelings.generated,
-          feeling_managed:   feelings.managed,
-          values_selected:   anchorLabel ? [anchorLabel] : [],
-        };
-
-        try {
-          const { error: dbError } = await db.from('registros').insert({
-            ...baseRecord,
-            patterns_active: selectedPatterns.map(p => p.label),
-          });
-          if (dbError) setError('No se pudo guardar el registro. Inténtalo de nuevo.');
-          else setSaved(true);
-        } catch (err) {
-          setError('No se pudo guardar el registro. Inténtalo de nuevo.');
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      const handleNext = () => {
-        if (step < 5) {
-          setStep(step + 1);
-        } else if (step === 5 && !saved) {
-          saveRecord();
-        }
-      };
-
-      const handleBack = () => {
-        if (step > 1 && step < 5 && !saved) setStep(step - 1);
-      };
-
-      const suggestedValueIds = selectedPatterns.length > 0
-        ? [...new Set(selectedPatterns.flatMap(p => p.values))].slice(0, 4)
-        : [];
-      const otherValues = ALL_VALUES.filter(v => !suggestedValueIds.includes(v.id));
-      const suggestedValues = ALL_VALUES.filter(v => suggestedValueIds.includes(v.id));
-
-      const togglePattern = (p) => {
-        setSelectedPatterns(prev => {
-          if (prev.find(x => x.id === p.id)) return prev.filter(x => x.id !== p.id);
-          if (prev.length >= 3) return prev;
-          return [...prev, p];
-        });
-        setActivePatternTab(0);
-        setAnchorValue(null);
-      };
-
-      const canContinue = () => {
-        if (step === 1) return !!emotion;
-        if (step === 2) return intensity !== null;
-        if (step === 3) return feelings.what.trim() && feelings.generated.trim() && feelings.managed.trim();
-        if (step === 4) return true;
-        if (step === 5) return true;
-        return true;
-      };
-
       /* ── Renders de tabs ── */
+      const regModal = showRegModal && (
+        <QuickRegisterModal
+          darkMode={darkMode}
+          onClose={() => setShowRegModal(false)}
+          onSaved={() => {}}
+        />
+      );
+
       if (activeTab === 'home') return (
         <>
-          <HomeScreen setActiveTab={setActiveTab} darkMode={darkMode} setDarkMode={setDarkMode} ptiConfig={ptiConfig} />
-          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+          <HomeScreen setActiveTab={setActiveTab} darkMode={darkMode} setDarkMode={setDarkMode} ptiConfig={ptiConfig} onRegisterClick={() => setShowRegModal(true)} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} onRegisterClick={() => setShowRegModal(true)} />
+          {regModal}
         </>
       );
 
       if (activeTab === 'pti') return (
         <>
           <PTIScreen darkMode={darkMode} setDarkMode={setDarkMode} ptiConfig={ptiConfig} refreshPTIConfig={loadPTIConfig} />
-          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} onRegisterClick={() => setShowRegModal(true)} />
+          {regModal}
         </>
       );
 
       if (activeTab === 'presupuesto') return (
         <>
           <BudgetScreen darkMode={darkMode} setDarkMode={setDarkMode} />
-          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} onRegisterClick={() => setShowRegModal(true)} />
+          {regModal}
         </>
       );
 
       if (activeTab === 'historial') return (
         <>
           <HistorialScreen darkMode={darkMode} setDarkMode={setDarkMode} />
-          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} onRegisterClick={() => setShowRegModal(true)} />
+          {regModal}
         </>
       );
 
-      /* ── Tab Registro — flujo de 6 pasos ── */
-      const activeColor = emotion?.color || 'var(--ph-orange)';
-
-      return (
-        <>
-          <style>{`
-            @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
-          `}</style>
-
-          <div className={`ej-root${darkMode ? '' : ' light'}`} style={{ '--active-color': activeColor }}>
-            <div className="ej-container">
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>
-                  Paso {step} · {STEP_NAMES[step - 1]}
-                </div>
-                <button className="theme-toggle" onClick={() => setDarkMode(d => !d)} title={darkMode ? 'Modo claro' : 'Modo oscuro'}>
-                  {darkMode ? '☀️' : '🌙'}
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
-                {[1,2,3,4,5].map(n => (
-                  <div key={n} style={{
-                    flex: 1, height: 4, borderRadius: 4,
-                    background: n <= step ? activeColor : 'var(--border)',
-                    transition: 'background 0.4s ease',
-                  }} />
-                ))}
-              </div>
-
-              <div key={step} className="ej-step">
-
-                {/* Paso 1 — Emoción */}
-                {step === 1 && (
-                  <>
-                    <h1 className="ej-serif" style={{ fontSize: 32, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 28px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
-                      {'¿Qué estás\nsintiendo?'}
-                    </h1>
-                    <div className="ej-grid2">
-                      {EMOTIONS.map(e => {
-                        const selected = emotion?.name === e.name;
-                        return (
-                          <button key={e.name} className="ej-btn"
-                            onClick={() => setEmotion(e)}
-                            style={{
-                              background: selected ? `${e.color}22` : 'var(--card)',
-                              border: `${selected ? 1.5 : 1}px solid ${selected ? e.color : 'var(--border)'}`,
-                              borderRadius: 16, padding: '18px 14px', textAlign: 'left',
-                              transition: 'all 0.4s ease', color: 'var(--text-card)',
-                            }}>
-                            <div style={{ fontSize: 28, transform: selected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.4s ease', transformOrigin: 'left center', display: 'inline-block', lineHeight: 1 }}>{e.emoji}</div>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-card)', marginTop: 10 }}>{e.name}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-
-                {/* Paso 2 — Intensidad */}
-                {step === 2 && (
-                  <>
-                    <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 28px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
-                      {'¿Con qué fuerza\nla sientes?'}
-                    </h1>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
-                      {[1,2,3,4,5,6,7,8,9,10].map(n => {
-                        const selected = intensity === n;
-                        return (
-                          <button key={n} className="ej-btn"
-                            onClick={() => setIntensity(n)}
-                            style={{
-                              height: 52,
-                              background: selected ? activeColor : 'var(--card)',
-                              border: `1px solid ${selected ? activeColor : 'var(--border)'}`,
-                              borderRadius: 12, color: selected ? '#fff' : 'var(--num-off-text)',
-                              fontSize: 20, fontWeight: 600,
-                              transform: selected ? 'scale(1.05)' : 'scale(1)',
-                              transition: 'all 0.4s ease',
-                            }}>{n}</button>
-                        );
-                      })}
-                    </div>
-                    {intensity !== null && (
-                      <div style={{ marginTop: 22, textAlign: 'center' }}>
-                        <span style={{ display: 'inline-block', background: 'var(--card)', borderRadius: 20, padding: '8px 16px', fontSize: 12, color: activeColor, transition: 'color 0.4s ease' }}>{intensityLabel(intensity)}</span>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Paso 3 — Hoja de sentimiento */}
-                {step === 3 && (
-                  <>
-                    <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', whiteSpace: 'pre-line', fontWeight: 400 }}>
-                      {'Hoja de\nsentimiento'}
-                    </h1>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
-                      Escribe sin filtros. Nadie más lo leerá.
-                    </p>
-                    {FEELING_FIELDS.map(f => (
-                      <div key={f.key} style={{ marginBottom: 18 }}>
-                        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 6 }}>{f.label}</div>
-                        <textarea className="ej-textarea" placeholder={f.placeholder}
-                          value={feelings[f.key]}
-                          onChange={e => setFeelings({ ...feelings, [f.key]: e.target.value })}
-                        />
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                {/* Paso 4 — Patrón */}
-                {step === 4 && (
-                  <>
-                    <h1 className="ej-serif" style={{ fontSize: 28, color: 'var(--text)', lineHeight: 1.1, margin: '0 0 8px 0', fontWeight: 400 }}>
-                      ¿Qué patrón<br />reconoces hoy?
-                    </h1>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 24px 0' }}>
-                      Toca los que estuvieron activos. Puedes elegir hasta 3. Si no ves ninguno, continúa.
-                    </p>
-                    <div className="ej-grid2">
-                      {PATTERNS.map(p => {
-                        const isSel = selectedPatterns.find(x => x.id === p.id);
-                        const isDisabled = !isSel && selectedPatterns.length >= 3;
-                        return (
-                          <button key={p.id}
-                            className={`pat-card${isSel ? ' sel' : ''}`}
-                            disabled={isDisabled}
-                            onClick={() => togglePattern(p)}
-                            style={{
-                              background: isSel ? `${activeColor}1a` : 'var(--card)',
-                              border: `${isSel ? 1.5 : 1}px solid ${isSel ? activeColor : 'var(--border)'}`,
-                              opacity: isDisabled ? 0.35 : 1,
-                            }}>
-                            <span className="pat-emoji">{p.emoji}</span>
-                            <span className="pat-name" style={{ color: isSel ? activeColor : 'var(--text-card)', fontWeight: isSel ? 600 : 500 }}>
-                              {p.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {selectedPatterns.length > 0 && (
-                      <div style={{ fontSize: 11, color: activeColor, textAlign: 'center', marginTop: 12 }}>
-                        {selectedPatterns.length} de 3 seleccionado{selectedPatterns.length > 1 ? 's' : ''}
-                      </div>
-                    )}
-                    {selectedPatterns.length === 0 && (
-                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center', marginTop: 12 }}>
-                        Puedes elegir hasta 3
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Paso 5 — Cierre */}
-                {step === 5 && (() => {
-                  if (loading) return (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 0' }}>
-                      <div className="ej-pulse" style={{ fontSize: 48, lineHeight: 1 }}>✨</div>
-                      <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 20 }}>Guardando tu registro...</p>
-                    </div>
-                  );
-
-                  if (saved) {
-                    const anchorLabel = anchorValue ? ALL_VALUES.find(v => v.id === anchorValue)?.label : null;
-                    return (
-                      <>
-                        <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--border)' }}>
-                          <span style={{ fontSize: 24, lineHeight: 1 }}>{emotion.emoji}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span>{emotion.name}</span>
-                              <span style={{ fontSize: 11, color: activeColor, fontWeight: 600 }}>{intensity}/10</span>
-                            </div>
-                            {selectedPatterns.length > 0 && (
-                              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
-                                {selectedPatterns.map(p => p.label).join(' · ')}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {selectedPatterns.length > 0 && (() => {
-                          const p = selectedPatterns[0];
-                          return (
-                            <div style={{ background: 'var(--card)', borderRadius: 14, padding: 16, border: `1px solid var(--border)`, borderLeft: `3px solid ${activeColor}`, marginBottom: 12 }}>
-                              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: activeColor, fontWeight: 700, marginBottom: 8 }}>
-                                🧰 Recuerda tu herramienta · {p.label}
-                              </div>
-                              <p style={{ fontSize: 13, color: 'var(--text-card)', lineHeight: 1.65, margin: 0 }}>
-                                {p.tools[0]}
-                              </p>
-                            </div>
-                          );
-                        })()}
-
-                        <div style={{ background: `${activeColor}18`, border: `1px solid ${activeColor}35`, borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', gap: 8, color: activeColor, fontSize: 13, fontWeight: 500 }}>
-                          <span>✓</span>
-                          <span>Registro completado y guardado</span>
-                          <button className="ej-btn" onClick={() => setActiveTab('historial')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: activeColor, fontSize: 12, padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>
-                            Ver historial
-                          </button>
-                        </div>
-
-                        {navigator.share && (
-                          <button className="ej-btn" onClick={async () => {
-                            const patternsLabel = selectedPatterns.map(p => p.label).join(', ');
-                            try {
-                              await navigator.share({
-                                title: 'Hoja de sentimiento',
-                                text: [
-                                  `${emotion.emoji} ${emotion.name.toUpperCase()} · ${intensity}/10`,
-                                  patternsLabel ? `Patrón: ${patternsLabel}` : null,
-                                  ``,
-                                  `¿Qué pasó?`,
-                                  feelings.what,
-                                  ``,
-                                  `¿Qué generó en mí?`,
-                                  feelings.generated,
-                                  ``,
-                                  `¿Cómo lo gestioné?`,
-                                  feelings.managed,
-                                  ``,
-                                  `— Hoja de sentimiento · Projecte Home`,
-                                ].filter(l => l !== null).join('\n'),
-                              });
-                            } catch(e) {}
-                          }} style={{ width: '100%', marginTop: 10, padding: '13px 0', background: 'transparent', border: `1px solid ${activeColor}50`, borderRadius: 14, color: activeColor, fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            <span>↗</span> Compartir hoja
-                          </button>
-                        )}
-
-                        {error && (
-                          <p style={{ color: '#E24B4A', fontSize: 13, textAlign: 'center', marginTop: 12 }}>{error}</p>
-                        )}
-                      </>
-                    );
-                  }
-
-                  const fraseIdx = Math.floor(Math.random() * FRASES_MOTIVACIONALES.length);
-                  const frase = FRASES_MOTIVACIONALES[fraseIdx];
-                  return (
-                    <>
-                      {selectedPatterns.length > 0 && (() => {
-                        const p = selectedPatterns[activePatternTab] || selectedPatterns[0];
-                        return (
-                          <>
-                            {selectedPatterns.length > 1 && (
-                              <div className="pti-tabs" style={{ margin: '0 -20px 16px', padding: '0 20px' }}>
-                                {selectedPatterns.map((pt, i) => (
-                                  <button key={pt.id}
-                                    className={`pti-tab${activePatternTab === i ? ' active' : ''}`}
-                                    style={activePatternTab === i ? { background: activeColor, borderColor: activeColor } : {}}
-                                    onClick={() => setActivePatternTab(i)}>
-                                    {pt.emoji} {pt.label}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                            <div className="pti-card" style={{ borderTop: `3px solid ${activeColor}`, marginBottom: 20 }}>
-                              <div className="pti-header">
-                                <div className="pti-title" style={{ color: activeColor }}>🧰 Tu herramienta ahora</div>
-                              </div>
-                              <div className="pti-tools">
-                                {p.tools.map((t, i) => (
-                                  <div key={i} className="pti-tool">
-                                    <span className="pti-arrow" style={{ color: activeColor }}>→</span>
-                                    <span>{t}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()}
-
-                      <div style={{
-                        background: 'linear-gradient(135deg, var(--ph-soft-bg) 0%, var(--card) 100%)',
-                        border: '1px solid var(--ph-soft-border)',
-                        borderRadius: 20,
-                        padding: '32px 24px',
-                        textAlign: 'center',
-                        marginBottom: 20,
-                        position: 'relative',
-                        overflow: 'hidden',
-                      }}>
-                        <div style={{
-                          position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                          background: 'linear-gradient(90deg, var(--ph-orange), var(--ph-soft-border))',
-                          borderRadius: '20px 20px 0 0',
-                        }} />
-                        <div style={{ fontSize: 36, marginBottom: 16 }}>{frase.icono}</div>
-                        <p className="ej-serif" style={{
-                          fontSize: 20,
-                          lineHeight: 1.5,
-                          color: 'var(--text)',
-                          fontWeight: 400,
-                          fontStyle: 'italic',
-                          margin: '0 0 20px 0',
-                        }}>
-                          "{frase.texto}"
-                        </p>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
-                          {FRASES_MOTIVACIONALES.map((_, i) => (
-                            <div key={i} style={{
-                              width: i === fraseIdx ? 16 : 5,
-                              height: 5,
-                              borderRadius: 3,
-                              background: i === fraseIdx ? 'var(--ph-orange)' : 'var(--border)',
-                              transition: 'all 0.3s ease',
-                            }} />
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-
-              <div style={{ marginTop: 28, display: 'flex', gap: 10 }}>
-                {step > 1 && step < 5 && !saved && (
-                  <button className="ej-btn" onClick={handleBack} style={{ padding: '15px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
-                    Atrás
-                  </button>
-                )}
-                {!saved && !loading && (
-                  <button className="ej-btn ej-main" disabled={!canContinue()} onClick={handleNext} style={{ flex: 1, padding: 15, borderRadius: 14, fontSize: 15, fontWeight: 600, background: canContinue() ? activeColor : 'var(--btn-off-bg)', color: canContinue() ? '#fff' : 'var(--btn-off-text)', border: 'none' }}>
-                    {step === 4 && selectedPatterns.length === 0 ? 'Continuar sin patrón' : step === 5 ? '✓ Finalizar' : 'Continuar'}
-                  </button>
-                )}
-                {saved && (
-                  <button className="ej-btn" onClick={reset} style={{ flex: 1, padding: 15, background: 'transparent', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>
-                    Nuevo registro
-                  </button>
-                )}
-              </div>
-
-            </div>
-          </div>
-          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-        </>
-      );
+      // Tab por defecto (fallback)
+      return null;
     }
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
