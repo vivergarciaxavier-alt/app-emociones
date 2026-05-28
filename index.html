@@ -17,6 +17,7 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; }
@@ -107,7 +108,6 @@
       to   { opacity:1; transform:scale(1); }
     }
     .ej-pulse { animation: pulseEmoji 2s ease-in-out infinite; }
-    .ej-check { animation: fadeIn .15s ease-out; display: inline-block; }
 
     .ej-textarea {
       width: 100%;
@@ -179,26 +179,6 @@
     .pat-card.sel .pat-emoji { transform: scale(1.12); }
     .pat-name { font-size: 13px; font-weight: 500; color: var(--text-card); line-height: 1.3; }
 
-    .val-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px 14px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-family: inherit;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 48px;
-      -webkit-appearance: none;
-    }
-    .val-card:active { transform: scale(0.98); }
-    .val-emoji { font-size: 16px; }
-    .val-name { font-size: 13px; color: var(--text-card); flex: 1; }
-    .val-check { font-size: 11px; display: none; margin-left: auto; }
-    .val-card.sel .val-check { display: block; }
-
     .pti-card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -221,16 +201,6 @@
     .pti-tab { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; font-size: 12px; font-family: inherit; cursor: pointer; color: var(--text-secondary); transition: all 0.2s; white-space: nowrap; }
     .pti-tab.active { color: #fff; border-color: transparent; }
 
-    .reflex-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
-    }
-    .reflex-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 7px; }
-    .reflex-q { font-family: 'DM Serif Display', Georgia, serif; font-size: 15px; font-style: italic; line-height: 1.65; color: var(--text); }
-
     /* Tab bar */
     .tab-bar {
       position: fixed;
@@ -250,27 +220,6 @@
     }
     .tab-item i { font-size: 20px; }
     .tab-item span { font-size: 10px; }
-
-    /* Sub-tabs para Mi PTI */
-    .sub-tabs {
-      display: flex; gap: 0;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 3px;
-      margin-bottom: 20px;
-    }
-    .sub-tab {
-      flex: 1; padding: 8px 4px; border-radius: 10px;
-      border: none; background: transparent; cursor: pointer;
-      font-size: 12px; font-family: inherit; font-weight: 500;
-      color: var(--text-secondary); transition: all 0.2s;
-      text-align: center;
-    }
-    .sub-tab.active {
-      background: var(--ph-orange);
-      color: #fff;
-    }
 
     /* PTI expandible */
     .pti-pat-card {
@@ -295,7 +244,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useCallback } = React;
+    const { useState, useEffect } = React;
 
     /* ── Supabase ── */
     const SUPABASE_URL = 'https://kqhsgmvsxdyyhpcqwzwr.supabase.co';
@@ -411,6 +360,29 @@
     ];
 
     const DEFAULT_STRENGTHS = ['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'];
+
+    /* ── Reglas de categorización Revolut ── */
+    const MERCHANT_RULES = [
+      { patterns: ['mercadona','lidl','aldi','carrefour','dia ','ahorramas','consum','eroski','hipercor','supermercado','fruiteria','fruteria','panaderia','charcuteria','carnisseria'], cat: 'alimentacion' },
+      { patterns: ['mcdonald','burger','kfc','telepizza','dominos','restaurante','restaurant ','cafeteria','glovo','uber eats','just eat','deliveroo','wolt','takeaway'], cat: 'comer_fuera' },
+      { patterns: ['cabify','uber ','bolt ','renfe','fgc','tmb','metro ','parking','aparcamiento','gasolinera','repsol','bp ','cepsa','shell','galp','blablacar','flixbus'], cat: 'transporte' },
+      { patterns: ['netflix','spotify','amazon prime','hbo','disney','apple.com','google play','microsoft','adobe','dropbox','youtube premium','dazn'], cat: 'suscripciones' },
+      { patterns: ['fnac','mediamarkt','decathlon','zara ','h&m','primark','mango ','amazon ','el corte'], cat: 'ocio' },
+      { patterns: ['farmacia','farmàcia','peluqueria','barberia','barbershop','gym ','gimnasio','fitness','spa '], cat: 'cuidado' },
+      { patterns: ['starbucks','coffee','nespresso','cafè','caffè'], cat: 'cafe' },
+      { patterns: ['projecte home','projectehome'], cat: 'projecte_home' },
+      { patterns: ['movistar','vodafone','orange ','yoigo','masmovil','jazztel','pepephone'], cat: 'telefono' },
+      { patterns: ['endesa','iberdrola','naturgy','gas natural','agbar','aigues ','aguas '], cat: 'suministros' },
+      { patterns: ['mapfre','mutua ','axa ','allianz','linea directa','generali'], cat: 'seguro' },
+      { patterns: ['estanco','tabac','cigarr'], cat: 'tabaco' },
+    ];
+    const categorizeMerchant = (desc) => {
+      const d = desc.toLowerCase();
+      for (const rule of MERCHANT_RULES) {
+        if (rule.patterns.some(p => d.includes(p))) return rule.cat;
+      }
+      return null;
+    };
 
     const PTI_EMOTIONS = [
       { id: 'culpa', emoji: '😶', name: 'Culpa', color: '#E24B4A',
@@ -1190,12 +1162,14 @@
 
         if (data) {
           const patternCount = {};
-          const emotionCount = {};
+          const valuesCount = {};
           data.forEach(r => {
             if (r.patterns_active && r.patterns_active.length) {
               r.patterns_active.forEach(p => { patternCount[p] = (patternCount[p] || 0) + 1; });
             }
-            if (r.emotion_name) { emotionCount[r.emotion_name] = (emotionCount[r.emotion_name] || 0) + 1; }
+            if (r.values_selected && r.values_selected.length) {
+              r.values_selected.forEach(v => { valuesCount[v] = (valuesCount[v] || 0) + 1; });
+            }
           });
 
           const sevenAgo = new Date();
@@ -1210,7 +1184,7 @@
             if (days.has(d.toLocaleDateString('es-ES'))) { streak++; } else { break; }
           }
 
-          setStatsData({ total: data.length, weekCount: weekData.length, streak, patternCount });
+          setStatsData({ total: data.length, weekCount: weekData.length, streak, patternCount, valuesCount });
         }
         setLoadingStats(false);
       };
@@ -1664,21 +1638,30 @@
     }
 
     /* ── Componente fila de gasto acumulativo ── */
-    function GastoRow({ label, valEst, row, onEst, onAddEntry, onDeleteEntry, inputStyle }) {
+    function GastoRow({ label, valEst, row, onEst, onAddEntry, onDeleteEntry, inputStyle, suggestions = [], isFixed = false }) {
       const [open, setOpen] = React.useState(false);
       const [addVal, setAddVal] = React.useState('');
+      const [addDesc, setAddDesc] = React.useState('');
       const entries = row.entries || [];
       const total = entries.length > 0
         ? entries.reduce((s, e) => s + (e.amount || 0), 0)
         : parseFloat(row.real) || 0;
       const fmt2 = v => Number.isInteger(v) ? String(v) : v.toFixed(2);
 
+      const est = parseFloat(valEst) || 0;
+      const pct = est > 0 ? total / est : 0;
+      const barColor = pct > 1 ? '#E24B4A' : pct > 0.79 ? '#EF9F27' : '#4CAF50';
+      const realColor = pct > 1 ? '#E24B4A' : pct > 0.79 ? '#EF9F27' : total > 0 ? 'var(--text)' : 'var(--text-muted)';
+      const barHeight = isFixed ? 2 : 3;
+      const barOpacity = isFixed ? 0.6 : 1;
+
       const handleAdd = () => {
         const v = parseFloat(addVal.replace(',', '.'));
         if (!v || v <= 0) return;
         const hoy = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-        onAddEntry({ amount: v, date: hoy });
+        onAddEntry({ amount: v, date: hoy, desc: addDesc.trim() });
         setAddVal('');
+        setAddDesc('');
       };
 
       return (
@@ -1688,7 +1671,7 @@
             <input type="number" inputMode="decimal" placeholder="0" value={valEst}
               onChange={e => onEst(e.target.value)} style={inputStyle} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 12, color: total > 0 ? 'var(--text)' : 'var(--text-muted)', textAlign: 'right', flex: 1 }}>
+              <span style={{ fontSize: 12, color: realColor, textAlign: 'right', flex: 1, fontWeight: pct > 0.79 ? 600 : 400 }}>
                 {total > 0 ? fmt2(total) : '0'}
               </span>
               <button onClick={() => setOpen(o => !o)} style={{
@@ -1702,31 +1685,58 @@
               }}>{open ? '−' : '+'}</button>
             </div>
           </div>
+          {!open && est > 0 && (
+            <div style={{ height: barHeight, background: 'var(--border)', marginTop: -1, opacity: barOpacity }}>
+              <div style={{
+                height: '100%', borderRadius: 99,
+                width: `${Math.min(pct * 100, 100)}%`,
+                background: barColor,
+                transition: 'width 0.5s ease',
+              }} />
+            </div>
+          )}
           {open && (
             <div style={{ paddingBottom: 10, paddingLeft: 2 }}>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input
+                    type="number" inputMode="decimal" placeholder="Importe…"
+                    value={addVal}
+                    onChange={e => setAddVal(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                    style={{ ...inputStyle, flex: 1, textAlign: 'left', fontSize: 12, padding: '5px 8px' }}
+                    autoFocus
+                  />
+                  <button onClick={handleAdd} style={{
+                    padding: '5px 12px', background: 'var(--ph-orange)', border: 'none',
+                    borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  }}>✓ Añadir</button>
+                </div>
+                {suggestions.length > 0 && (
+                  <datalist id={`sugg-${label}`}>
+                    {suggestions.map((s, i) => <option key={i} value={s} />)}
+                  </datalist>
+                )}
                 <input
-                  type="number" inputMode="decimal" placeholder="Importe…"
-                  value={addVal}
-                  onChange={e => setAddVal(e.target.value)}
+                  type="text" placeholder="Sitio o descripción (opcional)"
+                  list={suggestions.length > 0 ? `sugg-${label}` : undefined}
+                  value={addDesc}
+                  onChange={e => setAddDesc(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                  style={{ ...inputStyle, flex: 1, textAlign: 'left', fontSize: 12, padding: '5px 8px' }}
-                  autoFocus
+                  style={{ ...inputStyle, textAlign: 'left', fontSize: 12, padding: '5px 8px' }}
                 />
-                <button onClick={handleAdd} style={{
-                  padding: '5px 12px', background: 'var(--ph-orange)', border: 'none',
-                  borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-                }}>✓ Añadir</button>
               </div>
               {entries.length > 0 ? (
                 <div>
                   {entries.map((e, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{fmt2(e.amount)}€ · {e.date}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-secondary)', flex: 1, paddingRight: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {fmt2(e.amount)}€{e.desc ? ` · ${e.desc}` : ''} · {e.date}
+                      </span>
                       <button onClick={() => onDeleteEntry(i)} style={{
                         background: 'none', border: 'none', color: '#E24B4A',
-                        fontSize: 17, cursor: 'pointer', padding: '0 4px', lineHeight: 1,
+                        fontSize: 17, cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0,
                       }}>×</button>
                     </div>
                   ))}
@@ -1743,20 +1753,236 @@
       );
     }
 
-    /* ── Pantalla Presupuesto mensual ──
-       Tabla Supabase necesaria (ejecutar en Supabase SQL editor):
-       CREATE TABLE presupuestos (
-         id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-         created_at timestamptz DEFAULT now(),
-         mes int2 NOT NULL,
-         anio int2 NOT NULL,
-         data jsonb,
-         updated_at timestamptz DEFAULT now(),
-         UNIQUE (mes, anio)
-       );
-       ALTER TABLE presupuestos ENABLE ROW LEVEL SECURITY;
-       CREATE POLICY "Acceso personal" ON presupuestos FOR ALL USING (true);
-    ── */
+    /* ── Modal importar Revolut ── */
+    function RevolutImportModal({ darkMode, mes, anio, gastosKeys, onClose, onImport }) {
+      const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const [step, setStep] = React.useState('pick'); // 'pick' | 'review' | 'done'
+      const [transactions, setTransactions] = React.useState([]);
+      const [error, setError] = React.useState('');
+      const [loading, setLoading] = React.useState(false);
+
+      const catOptions = [
+        { key: '', label: '— ignorar —' },
+        ...gastosKeys.map(({key, label}) => ({ key, label })),
+      ];
+
+      const handleFile = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setLoading(true);
+        setError('');
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const wb = window.XLSX.read(evt.target.result, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = window.XLSX.utils.sheet_to_json(ws, { header: 1 });
+            if (!rows || rows.length < 2) { setError('El archivo parece vacío.'); setLoading(false); return; }
+
+            // Detectar cabeceras dinámicamente
+            const headers = rows[0].map(h => (h || '').toString().trim().toLowerCase());
+            const iDesc  = headers.findIndex(h => h.includes('description') || h === 'descripción' || h === 'descripcion');
+            const iAmt   = headers.findIndex(h => h === 'amount' || h === 'importe');
+            const iDate  = headers.findIndex(h => h.includes('completed') || h.includes('fecha') || h === 'date');
+            const iState = headers.findIndex(h => h === 'state' || h === 'estado');
+
+            if (iDesc < 0 || iAmt < 0) {
+              setError('No se reconoce el formato. Asegúrate de exportar en Excel desde Revolut.');
+              setLoading(false); return;
+            }
+
+            const parsed = [];
+            for (let i = 1; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || row.length === 0) continue;
+              const state = iState >= 0 ? (row[iState] || '').toString().trim().toUpperCase() : 'COMPLETED';
+              if (state !== 'COMPLETED') continue;
+              const amt = parseFloat(row[iAmt]);
+              if (isNaN(amt) || amt >= 0) continue; // solo gastos (negativos)
+
+              // Parsear fecha
+              let dateStr = '';
+              if (iDate >= 0 && row[iDate]) {
+                const raw = row[iDate].toString().trim();
+                // Formato Revolut: "2026-05-15 10:23:45" o serial Excel o "15/05/2026"
+                let d;
+                if (typeof row[iDate] === 'number') {
+                  // Serial date de Excel
+                  const jsDate = new Date(Math.round((row[iDate] - 25569) * 86400 * 1000));
+                  d = jsDate;
+                } else {
+                  d = new Date(raw.replace(' ', 'T'));
+                  if (isNaN(d)) d = new Date(raw.split('/').reverse().join('-'));
+                }
+                if (!isNaN(d)) {
+                  // Filtrar por mes/año seleccionado
+                  if (d.getMonth() + 1 !== mes || d.getFullYear() !== anio) continue;
+                  dateStr = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                }
+              }
+
+              const desc = (row[iDesc] || '').toString().trim();
+              const autoCat = categorizeMerchant(desc) || '';
+              parsed.push({ desc, amount: Math.abs(amt), date: dateStr, cat: autoCat, skip: false });
+            }
+
+            if (parsed.length === 0) {
+              setError(`No hay gastos en ${MESES[mes-1]} ${anio}. Verifica el mes seleccionado o el archivo.`);
+              setLoading(false); return;
+            }
+            setTransactions(parsed);
+            setStep('review');
+          } catch (err) {
+            setError('Error al leer el archivo: ' + err.message);
+          }
+          setLoading(false);
+        };
+        reader.readAsArrayBuffer(file);
+      };
+
+      const updateTx = (i, field, val) => {
+        setTransactions(prev => prev.map((t, idx) => idx === i ? { ...t, [field]: val } : t));
+      };
+
+      const handleConfirm = () => {
+        const grouped = {};
+        transactions.forEach(t => {
+          if (t.skip || !t.cat) return;
+          if (!grouped[t.cat]) grouped[t.cat] = [];
+          grouped[t.cat].push({ amount: t.amount, date: t.date, desc: t.desc });
+        });
+        onImport(grouped);
+        setStep('done');
+        setTimeout(onClose, 1200);
+      };
+
+      const toImport = transactions.filter(t => !t.skip && t.cat);
+
+      const overlayStyle = {
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000,
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      };
+      const sheetStyle = {
+        background: 'var(--card)', borderRadius: '20px 20px 0 0', width: '100%',
+        maxWidth: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+        overflow: 'hidden', boxShadow: '0 -4px 30px rgba(0,0,0,0.25)',
+      };
+
+      return (
+        <div style={overlayStyle} onClick={e => e.target === e.currentTarget && onClose()}>
+          <div style={sheetStyle}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 20px 14px', borderBottom: '1px solid var(--divider)' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)' }}>📥 Importar Revolut</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{MESES[mes-1]} {anio}</div>
+              </div>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--text-muted)', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>×</button>
+            </div>
+
+            {/* Body */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '16px 20px' }}>
+
+              {step === 'pick' && (
+                <div style={{ textAlign: 'center', paddingTop: 12 }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
+                  <div style={{ fontSize: 14, color: 'var(--text)', marginBottom: 8, fontWeight: 600 }}>Sube el extracto de Revolut</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.6 }}>
+                    En Revolut: <b>Perfil → Declaraciones → Actividad de cuenta</b><br/>
+                    Selecciona el período y descarga en formato <b>Excel (.xlsx)</b>
+                  </div>
+                  <label style={{
+                    display: 'inline-block', background: 'var(--ph-orange)', color: '#fff',
+                    borderRadius: 12, padding: '12px 28px', fontSize: 14, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}>
+                    {loading ? 'Leyendo...' : '📎 Seleccionar archivo'}
+                    <input type="file" accept=".xlsx,.xls" onChange={handleFile} style={{ display: 'none' }} />
+                  </label>
+                  {error && <div style={{ marginTop: 16, fontSize: 12, color: '#E24B4A', background: 'rgba(226,75,74,0.1)', borderRadius: 8, padding: '10px 14px', textAlign: 'left', lineHeight: 1.5 }}>{error}</div>}
+                </div>
+              )}
+
+              {step === 'review' && (
+                <div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                    <b style={{ color: 'var(--text)' }}>{transactions.length}</b> movimientos encontrados · Asigna categoría o ignora
+                  </div>
+                  {transactions.map((t, i) => (
+                    <div key={i} style={{
+                      display: 'grid', gridTemplateColumns: '1fr auto', gap: 8,
+                      padding: '8px 0', borderBottom: '1px solid var(--divider)',
+                      opacity: t.skip ? 0.4 : 1,
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600, marginBottom: 2 }}>
+                          {t.desc.length > 36 ? t.desc.slice(0,36)+'…' : t.desc}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#E24B4A' }}>{t.amount.toFixed(2)}€</span>
+                          {t.date && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.date}</span>}
+                          <select
+                            value={t.cat}
+                            onChange={e => updateTx(i, 'cat', e.target.value)}
+                            disabled={t.skip}
+                            style={{
+                              fontSize: 11, borderRadius: 6, border: '1px solid var(--border)',
+                              background: 'var(--input-bg)', color: 'var(--text)', padding: '3px 6px',
+                              fontFamily: 'inherit', cursor: 'pointer', maxWidth: 160,
+                            }}
+                          >
+                            {catOptions.map(opt => (
+                              <option key={opt.key} value={opt.key}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => updateTx(i, 'skip', !t.skip)}
+                        style={{
+                          background: t.skip ? 'var(--input-bg)' : 'none',
+                          border: '1px solid var(--border)', borderRadius: 8,
+                          fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer',
+                          padding: '4px 8px', alignSelf: 'center', fontFamily: 'inherit',
+                        }}
+                        title={t.skip ? 'Incluir' : 'Ignorar'}
+                      >{t.skip ? '↩' : '✕'}</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {step === 'done' && (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <div style={{ fontSize: 48, marginBottom: 10 }}>✅</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Importado correctamente</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>Guarda el presupuesto para conservar los cambios</div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {step === 'review' && (
+              <div style={{ padding: '14px 20px', borderTop: '1px solid var(--divider)', display: 'flex', gap: 10 }}>
+                <button onClick={onClose} style={{
+                  flex: 1, padding: '12px 0', background: 'var(--input-bg)', border: '1px solid var(--border)',
+                  borderRadius: 12, fontSize: 14, color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit',
+                }}>Cancelar</button>
+                <button onClick={handleConfirm} disabled={toImport === 0} style={{
+                  flex: 2, padding: '12px 0', background: toImport > 0 ? 'var(--ph-orange)' : 'var(--border)',
+                  border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff',
+                  cursor: toImport > 0 ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
+                }}>
+                  ✓ Importar {toImport > 0 ? `${toImport} movimiento${toImport !== 1 ? 's' : ''}` : '(sin categorizar)'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Pantalla Presupuesto mensual ── */
     function BudgetScreen({ darkMode, setDarkMode }) {
       const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
       const now = new Date();
@@ -1765,40 +1991,44 @@
       const [saving, setSaving] = useState(false);
       const [saved,  setSaved]  = useState(false);
       const [emoData, setEmoData] = useState(null);
+      const [showImport, setShowImport] = useState(false);
 
       const INGRESOS_KEYS = [
         { key: 'nomina1',   label: 'Nómina 1'       },
         { key: 'nomina2',   label: 'Nómina 2'       },
         { key: 'otros_ing', label: 'Otros ingresos' },
       ];
-      const GASTOS_KEYS = [
-        { key: 'alojamiento',    label: 'Alojamiento'            },
-        { key: 'comunidad',      label: 'Gastos de comunidad'    },
-        { key: 'hipoteca',       label: 'Hipoteca'               },
-        { key: 'prestamo',       label: 'Préstamo'               },
-        { key: 'transporte',     label: 'Transporte'             },
-        { key: 'garaje',         label: 'Garaje'                 },
-        { key: 'alimentacion',   label: 'Alimentación'           },
-        { key: 'telefono',       label: 'Teléfono'               },
-        { key: 'suministros',    label: 'Luz / gas / agua'       },
-        { key: 'internet',       label: 'Internet'               },
-        { key: 'suscripciones',  label: 'Suscripciones'          },
-        { key: 'mantenimiento',  label: 'Mantenimiento'          },
-        { key: 'seguro',         label: 'Seguro (casa/coche)'    },
-        { key: 'matricula',      label: 'Matrícula'              },
-        { key: 'guarderia',      label: 'Guardería'              },
-        { key: 'extraescolares', label: 'Extraescolares'         },
-        { key: 'pension_hijos',  label: 'Pensión hijos'          },
-        { key: 'animal',         label: 'Animal de compañía'     },
-        { key: 'cuidado',        label: 'Cuidado personal'       },
-        { key: 'tabaco',         label: 'Tabaco'                 },
-        { key: 'cafe',           label: 'Café'                   },
-        { key: 'ocio',           label: 'Ocio / actividades'     },
-        { key: 'comer_fuera',    label: 'Comer fuera'            },
-        { key: 'projecte_home',  label: 'Projecte Home'          },
-        { key: 'ahorro',         label: 'Ahorro'                 },
-        { key: 'otros_gas',      label: 'Otros gastos'           },
+      const GASTOS_FIJOS_KEYS = [
+        { key: 'alojamiento',    label: 'Alojamiento'         },
+        { key: 'hipoteca',       label: 'Hipoteca'            },
+        { key: 'prestamo',       label: 'Préstamo'            },
+        { key: 'comunidad',      label: 'Comunidad'           },
+        { key: 'garaje',         label: 'Garaje'              },
+        { key: 'suministros',    label: 'Luz / gas / agua'    },
+        { key: 'internet',       label: 'Internet'            },
+        { key: 'telefono',       label: 'Teléfono'            },
+        { key: 'suscripciones',  label: 'Suscripciones'       },
+        { key: 'seguro',         label: 'Seguro'              },
+        { key: 'matricula',      label: 'Matrícula'           },
+        { key: 'guarderia',      label: 'Guardería'           },
+        { key: 'pension_hijos',  label: 'Pensión hijos'       },
+        { key: 'ahorro',         label: 'Ahorro'              },
       ];
+      const GASTOS_VARIABLES_KEYS = [
+        { key: 'alimentacion',   label: 'Alimentación'        },
+        { key: 'transporte',     label: 'Transporte'          },
+        { key: 'comer_fuera',    label: 'Comer fuera'         },
+        { key: 'ocio',           label: 'Ocio / actividades'  },
+        { key: 'cuidado',        label: 'Cuidado personal'    },
+        { key: 'cafe',           label: 'Café'                },
+        { key: 'animal',         label: 'Animal de compañía'  },
+        { key: 'extraescolares', label: 'Extraescolares'      },
+        { key: 'mantenimiento',  label: 'Mantenimiento'       },
+        { key: 'tabaco',         label: 'Tabaco'              },
+        { key: 'projecte_home',  label: 'Projecte Home'       },
+        { key: 'otros_gas',      label: 'Otros gastos'        },
+      ];
+      const GASTOS_KEYS = [...GASTOS_FIJOS_KEYS, ...GASTOS_VARIABLES_KEYS];
 
       const blankRows = (keys) => Object.fromEntries(keys.map(({key}) => [key, { est: '', real: '', entries: [] }]));
       const ensureEntries = (obj, keys) => Object.fromEntries(keys.map(({key}) => {
@@ -1811,8 +2041,11 @@
 
       const [ingresos, setIngresos] = useState(blankRows(INGRESOS_KEYS));
       const [gastos,   setGastos]   = useState(blankRows(GASTOS_KEYS));
+      const [notaMes,  setNotaMes]  = useState('');
+      const [showOnlyActive, setShowOnlyActive] = useState(false);
 
       const sKey = (m, y) => `budget_${y}_${m}`;
+      const isRowActive = (row) => (parseFloat(row?.est) || 0) > 0 || realTotal(row || {}) > 0;
 
       useEffect(() => {
         const stored = localStorage.getItem(sKey(mes, anio));
@@ -1821,16 +2054,29 @@
             const p = JSON.parse(stored);
             setIngresos(ensureEntries(p.ingresos, INGRESOS_KEYS));
             setGastos(ensureEntries(p.gastos,     GASTOS_KEYS));
+            setNotaMes(p.notaMes || '');
           } catch(e) {
             setIngresos(blankRows(INGRESOS_KEYS));
             setGastos(blankRows(GASTOS_KEYS));
+            setNotaMes('');
           }
         } else {
           setIngresos(blankRows(INGRESOS_KEYS));
           setGastos(blankRows(GASTOS_KEYS));
+          setNotaMes('');
         }
         loadEmoData();
       }, [mes, anio]);
+
+      // Auto-guardado en localStorage (sin Supabase, sin feedback visual)
+      const isFirstRender = React.useRef(true);
+      useEffect(() => {
+        if (isFirstRender.current) { isFirstRender.current = false; return; }
+        const t = setTimeout(() => {
+          localStorage.setItem(sKey(mes, anio), JSON.stringify({ ingresos, gastos, notaMes }));
+        }, 800);
+        return () => clearTimeout(t);
+      }, [ingresos, gastos, notaMes]);
 
       const loadEmoData = async () => {
         const start = new Date(anio, mes - 1, 1).toISOString();
@@ -1872,19 +2118,82 @@
       const flujoReal    = totalIngReal - totalGasReal;
       const fmt = n => n.toFixed(0);
 
-      const sortedGastosKeys = [...GASTOS_KEYS].sort((a, b) => realTotal(gastos[b.key]) - realTotal(gastos[a.key]));
+      const sortedFijosKeys     = [...GASTOS_FIJOS_KEYS]
+        .filter(({key}) => !showOnlyActive || isRowActive(gastos[key]))
+        .sort((a, b) => realTotal(gastos[b.key]) - realTotal(gastos[a.key]));
+      const sortedVariablesKeys = [...GASTOS_VARIABLES_KEYS]
+        .filter(({key}) => !showOnlyActive || isRowActive(gastos[key]))
+        .sort((a, b) => realTotal(gastos[b.key]) - realTotal(gastos[a.key]));
+      const totalGasFijosEst    = GASTOS_FIJOS_KEYS.reduce((s, {key}) => s + (parseFloat(gastos[key]?.est) || 0), 0);
+      const totalGasFijosReal   = GASTOS_FIJOS_KEYS.reduce((s, {key}) => s + realTotal(gastos[key] || {}), 0);
+      const totalGasVarEst      = GASTOS_VARIABLES_KEYS.reduce((s, {key}) => s + (parseFloat(gastos[key]?.est) || 0), 0);
+      const totalGasVarReal     = GASTOS_VARIABLES_KEYS.reduce((s, {key}) => s + realTotal(gastos[key] || {}), 0);
+
+      // Sugerencias: todas las descripciones únicas guardadas en localStorage
+      const allDescriptions = React.useMemo(() => {
+        const descs = new Set();
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k || !k.startsWith('budget_')) continue;
+          try {
+            const d = JSON.parse(localStorage.getItem(k));
+            if (d?.gastos) {
+              Object.values(d.gastos).forEach(row => {
+                (row.entries || []).forEach(e => { if (e.desc) descs.add(e.desc); });
+              });
+            }
+          } catch(e) {}
+        }
+        // también del estado actual
+        Object.values(gastos).forEach(row => {
+          (row.entries || []).forEach(e => { if (e.desc) descs.add(e.desc); });
+        });
+        return [...descs].sort();
+      }, [gastos]);
+
+      // Copiar estimados fijos del mes anterior
+      const handleCopyPrevMonth = () => {
+        const prevMes  = mes === 1 ? 12 : mes - 1;
+        const prevAnio = mes === 1 ? anio - 1 : anio;
+        const stored = localStorage.getItem(sKey(prevMes, prevAnio));
+        if (!stored) { alert(`No hay datos guardados de ${MESES[prevMes-1]} ${prevAnio}.`); return; }
+        try {
+          const prev = JSON.parse(stored);
+          if (!prev?.gastos) return;
+          setGastos(cur => {
+            const next = { ...cur };
+            GASTOS_FIJOS_KEYS.forEach(({key}) => {
+              const prevEst = prev.gastos[key]?.est;
+              if (prevEst) next[key] = { ...next[key], est: prevEst };
+            });
+            return next;
+          });
+        } catch(e) {}
+      };
 
       const handleSave = () => {
         setSaving(true);
-        localStorage.setItem(sKey(mes, anio), JSON.stringify({ ingresos, gastos }));
+        localStorage.setItem(sKey(mes, anio), JSON.stringify({ ingresos, gastos, notaMes }));
         db.from('presupuestos')
-          .upsert({ mes, anio, data: { ingresos, gastos }, updated_at: new Date().toISOString() }, { onConflict: 'mes,anio' })
+          .upsert({ mes, anio, data: { ingresos, gastos, notaMes }, updated_at: new Date().toISOString() }, { onConflict: 'mes,anio' })
           .then(() => {}).catch(() => {});
         setTimeout(() => {
           setSaving(false);
           setSaved(true);
           setTimeout(() => setSaved(false), 2200);
         }, 400);
+      };
+
+      const handleImport = (grouped) => {
+        setGastos(prev => {
+          const next = { ...prev };
+          Object.entries(grouped).forEach(([cat, entries]) => {
+            if (next[cat]) {
+              next[cat] = { ...next[cat], entries: [...(next[cat].entries || []), ...entries] };
+            }
+          });
+          return next;
+        });
       };
 
       const difStr = (est, real) => {
@@ -1940,6 +2249,10 @@
           }
         }
 
+        if (notaMes.trim()) {
+          lines.push(``, `📝 Nota del mes`, notaMes.trim());
+        }
+
         try {
           await navigator.share({ title: `Cierre ${MESES[mes-1]} ${anio}`, text: lines.join('\n') });
         } catch(e) {}
@@ -1991,12 +2304,22 @@
       );
 
       return (
+        <React.Fragment>
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
           <div className="ej-container">
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ fontSize: 19, fontWeight: 500, color: 'var(--text)' }}>Presupuesto mensual</h2>
-              <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>{darkMode ? '☀️' : '🌙'}</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button onClick={() => setShowOnlyActive(a => !a)} style={{
+                  fontSize: 11, padding: '5px 11px', borderRadius: 20,
+                  border: `1.5px solid ${showOnlyActive ? 'var(--ph-orange)' : 'var(--border)'}`,
+                  background: showOnlyActive ? 'var(--ph-orange)' : 'transparent',
+                  color: showOnlyActive ? '#fff' : 'var(--text-muted)',
+                  cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', fontWeight: 600,
+                }}>{showOnlyActive ? '✓ Activos' : 'Activos'}</button>
+                <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>{darkMode ? '☀️' : '🌙'}</button>
+              </div>
             </div>
 
             {/* Selector mes / año */}
@@ -2076,9 +2399,33 @@
               </div>
             )}
 
+            {/* RESUMEN VISUAL */}
+            {(totalIngEst > 0 || totalGasEst > 0 || totalIngReal > 0 || totalGasReal > 0) && (
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', marginBottom: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Resumen del mes</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, textAlign: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>📌 Fijos</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: totalGasFijosReal > totalGasFijosEst && totalGasFijosEst > 0 ? '#E24B4A' : 'var(--text)' }}>{fmt(totalGasFijosReal)}€</div>
+                    {totalGasFijosEst > 0 && <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>de {fmt(totalGasFijosEst)}€</div>}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>🔄 Variables</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: totalGasVarReal > totalGasVarEst && totalGasVarEst > 0 ? '#E24B4A' : 'var(--text)' }}>{fmt(totalGasVarReal)}€</div>
+                    {totalGasVarEst > 0 && <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>de {fmt(totalGasVarEst)}€</div>}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>💧 Flujo</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: flujoReal >= 0 ? '#4CAF50' : '#E24B4A' }}>{flujoReal >= 0 ? '+' : ''}{fmt(flujoReal)}€</div>
+                    {flujoEst !== 0 && <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>est {flujoEst >= 0 ? '+' : ''}{fmt(flujoEst)}€</div>}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Cabeceras columnas */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6, marginBottom: 8, paddingLeft: 2 }}>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}></span>
+              <span></span>
               <span style={{ fontSize: 9, textAlign: 'center', color: 'var(--ph-orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Estim.</span>
               <span style={{ fontSize: 9, textAlign: 'center', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Real</span>
             </div>
@@ -2086,24 +2433,35 @@
             {/* INGRESOS */}
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#4CAF50', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>📥 Ingresos</div>
-              {INGRESOS_KEYS.map(({key, label}) => (
-                <BRow key={key} label={label}
-                  valEst={ingresos[key].est} valReal={ingresos[key].real}
-                  onEst={v  => setIngresos(p => ({ ...p, [key]: { ...p[key], est:  v } }))}
-                  onReal={v => setIngresos(p => ({ ...p, [key]: { ...p[key], real: v } }))}
-                />
+              {INGRESOS_KEYS
+                .filter(({key}) => !showOnlyActive || (parseFloat(ingresos[key]?.est) || 0) > 0 || (parseFloat(ingresos[key]?.real) || 0) > 0)
+                .map(({key, label}) => (
+                  <BRow key={key} label={label}
+                    valEst={ingresos[key].est} valReal={ingresos[key].real}
+                    onEst={v  => setIngresos(p => ({ ...p, [key]: { ...p[key], est:  v } }))}
+                    onReal={v => setIngresos(p => ({ ...p, [key]: { ...p[key], real: v } }))}
+                  />
               ))}
               <TotalRow label="Total ingresos" est={totalIngEst} real={totalIngReal} color="#4CAF50" />
             </div>
 
-            {/* GASTOS */}
+            {/* GASTOS FIJOS */}
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#E24B4A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>📤 Gastos</div>
-              {sortedGastosKeys.map(({key, label}) => (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#E24B4A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>📌 Gastos fijos</div>
+                <button onClick={handleCopyPrevMonth} style={{
+                  fontSize: 10, color: 'var(--text-muted)', background: 'none',
+                  border: '1px solid var(--border)', borderRadius: 6, padding: '3px 8px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}>↩ Copiar mes anterior</button>
+              </div>
+              {sortedFijosKeys.map(({key, label}) => (
                 <GastoRow key={key} label={label}
                   valEst={gastos[key].est}
                   row={gastos[key]}
                   inputStyle={inputStyle}
+                  isFixed={true}
+                  suggestions={[]}
                   onEst={v => setGastos(p => ({ ...p, [key]: { ...p[key], est: v } }))}
                   onAddEntry={entry => setGastos(p => ({
                     ...p, [key]: { ...p[key], entries: [...(p[key].entries || []), entry] }
@@ -2113,24 +2471,65 @@
                   }))}
                 />
               ))}
-              <TotalRow label="Total gastos" est={totalGasEst} real={totalGasReal} color="#E24B4A" />
+              <TotalRow label="Total fijos" est={totalGasFijosEst} real={totalGasFijosReal} color="#E24B4A" />
             </div>
 
-            {/* FLUJO NETO */}
-            <div style={{
-              background: flujoReal >= 0 ? (darkMode ? '#0a2a1a' : '#f0faf4') : (darkMode ? '#2a0a0a' : '#fdf0f0'),
-              border: `1px solid ${flujoReal >= 0 ? '#4CAF5055' : '#E24B4A55'}`,
-              borderRadius: 14, padding: '14px 16px', marginBottom: 20,
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>💧 Flujo neto</span>
-                <span style={{ fontSize: 14, fontWeight: 700, textAlign: 'right', color: flujoEst  >= 0 ? '#4CAF50' : '#E24B4A' }}>{fmt(flujoEst)}€</span>
-                <span style={{ fontSize: 14, fontWeight: 700, textAlign: 'right', color: flujoReal >= 0 ? '#4CAF50' : '#E24B4A' }}>{fmt(flujoReal)}€</span>
+            {/* GASTOS VARIABLES */}
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#EF9F27', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>🔄 Gastos variables</div>
+              {sortedVariablesKeys.map(({key, label}) => (
+                <GastoRow key={key} label={label}
+                  valEst={gastos[key].est}
+                  row={gastos[key]}
+                  inputStyle={inputStyle}
+                  isFixed={false}
+                  suggestions={allDescriptions}
+                  onEst={v => setGastos(p => ({ ...p, [key]: { ...p[key], est: v } }))}
+                  onAddEntry={entry => setGastos(p => ({
+                    ...p, [key]: { ...p[key], entries: [...(p[key].entries || []), entry] }
+                  }))}
+                  onDeleteEntry={i => setGastos(p => ({
+                    ...p, [key]: { ...p[key], entries: p[key].entries.filter((_, idx) => idx !== i) }
+                  }))}
+                />
+              ))}
+              <TotalRow label="Total variables" est={totalGasVarEst} real={totalGasVarReal} color="#EF9F27" />
+            </div>
+
+            {/* FLUJO NETO — solo cuando hay datos */}
+            {(totalIngEst > 0 || totalIngReal > 0 || totalGasEst > 0 || totalGasReal > 0) && (
+              <div style={{
+                background: flujoReal >= 0 ? (darkMode ? '#0a2a1a' : '#f0faf4') : (darkMode ? '#2a0a0a' : '#fdf0f0'),
+                border: `1px solid ${flujoReal >= 0 ? '#4CAF5055' : '#E24B4A55'}`,
+                borderRadius: 14, padding: '14px 16px', marginBottom: 20,
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>💧 Flujo neto</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, textAlign: 'right', color: flujoEst  >= 0 ? '#4CAF50' : '#E24B4A' }}>{fmt(flujoEst)}€</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, textAlign: 'right', color: flujoReal >= 0 ? '#4CAF50' : '#E24B4A' }}>{fmt(flujoReal)}€</span>
+                </div>
               </div>
+            )}
+
+            {/* Nota del mes */}
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>📝 Nota del mes</div>
+              <textarea
+                value={notaMes}
+                onChange={e => setNotaMes(e.target.value)}
+                placeholder="Contexto del mes: gastos imprevistos, vacaciones, eventos especiales..."
+                rows={3}
+                style={{
+                  width: '100%', background: 'var(--input-bg)', border: '1px solid var(--border)',
+                  borderRadius: 10, padding: '8px 10px', fontSize: 13, color: 'var(--text)',
+                  fontFamily: 'inherit', resize: 'none', outline: 'none', boxSizing: 'border-box',
+                  lineHeight: 1.5,
+                }}
+              />
             </div>
 
             {/* Botones */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
               <button onClick={handleSave} disabled={saving} style={{
                 flex: 1, padding: '13px 0',
                 background: saved ? '#4CAF50' : 'var(--ph-orange)',
@@ -2155,9 +2554,30 @@
                 📋 Estimado
               </button>
             </div>
+            <button onClick={() => setShowImport(true)} style={{
+              width: '100%', padding: '12px 0', background: 'transparent',
+              border: '1.5px dashed var(--border)', borderRadius: 14,
+              color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit', marginBottom: 24,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              📥 Importar extracto Revolut
+            </button>
 
           </div>
         </div>
+
+        {showImport && (
+          <RevolutImportModal
+            darkMode={darkMode}
+            mes={mes}
+            anio={anio}
+            gastosKeys={GASTOS_KEYS}
+            onClose={() => setShowImport(false)}
+            onImport={handleImport}
+          />
+        )}
+        </React.Fragment>
       );
     }
 
@@ -2228,13 +2648,8 @@
             ...baseRecord,
             patterns_active: selectedPatterns.map(p => p.label),
           });
-          if (!dbError) {
-            setSaved(true);
-          } else {
-            const { error: dbError2 } = await db.from('registros').insert(baseRecord);
-            if (!dbError2) setSaved(true);
-            else setError('No se pudo guardar el registro. Inténtalo de nuevo.');
-          }
+          if (dbError) setError('No se pudo guardar el registro. Inténtalo de nuevo.');
+          else setSaved(true);
         } catch (err) {
           setError('No se pudo guardar el registro. Inténtalo de nuevo.');
         } finally {
