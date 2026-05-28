@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emociones-v27';
+const CACHE_NAME = 'emociones-v28';
 const ASSETS = [
   './',
   './index.html',

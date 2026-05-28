@@ -410,6 +410,8 @@
       { n: 10, texto: 'Me pongo primero sin culpa.' },
     ];
 
+    const DEFAULT_STRENGTHS = ['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'];
+
     const PTI_EMOTIONS = [
       { id: 'culpa', emoji: '😶', name: 'Culpa', color: '#E24B4A',
         when: 'Cuando pienso en el mal que hice durante mi época de consumo.',
@@ -479,10 +481,148 @@
       );
     }
 
+    /* ── Registro Rápido Modal ── */
+    function QuickRegisterModal({ darkMode, onClose, onSaved }) {
+      const [qEmotion, setQEmotion] = useState(null);
+      const [qIntensity, setQIntensity] = useState(null);
+      const [qNote, setQNote] = useState('');
+      const [saving, setSaving] = useState(false);
+      const [savedOk, setSavedOk] = useState(false);
+
+      const canSave = qEmotion && qIntensity !== null;
+
+      const handleSave = async () => {
+        if (!canSave || saving || savedOk) return;
+        setSaving(true);
+        try {
+          await db.from('registros').insert({
+            emotion_name:      qEmotion.name,
+            emotion_emoji:     qEmotion.emoji,
+            emotion_color:     qEmotion.color,
+            intensity:         qIntensity,
+            feeling_what:      qNote.trim(),
+            feeling_generated: '',
+            feeling_managed:   '',
+            values_selected:   [],
+            patterns_active:   [],
+          });
+          setSavedOk(true);
+          setTimeout(() => { onSaved(); onClose(); }, 1100);
+        } catch(e) {
+          setSaving(false);
+        }
+      };
+
+      return (
+        <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'var(--modal-bg)',
+          display: 'flex', alignItems: 'flex-end',
+        }}>
+          <div style={{
+            width: '100%', background: 'var(--modal-card)',
+            borderRadius: '20px 20px 0 0',
+            padding: '20px 20px calc(28px + env(safe-area-inset-bottom))',
+            animation: 'stepIn 0.25s ease-out',
+            maxHeight: '90vh', overflowY: 'auto',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>⚡ Registro rápido</h3>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: 'var(--text-secondary)', padding: '0 4px', lineHeight: 1 }}>×</button>
+            </div>
+
+            {savedOk ? (
+              <div style={{ textAlign: 'center', padding: '28px 0' }}>
+                <div style={{ fontSize: 44, marginBottom: 10 }}>✅</div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Guardado</p>
+              </div>
+            ) : (
+              <>
+                {/* Emociones */}
+                <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 10 }}>
+                  ¿Cómo te sientes?
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+                  {EMOTIONS.map(em => (
+                    <button key={em.name} onClick={() => setQEmotion(em)} style={{
+                      padding: '10px 4px', borderRadius: 12,
+                      border: `2px solid ${qEmotion?.name === em.name ? em.color : 'var(--border)'}`,
+                      background: qEmotion?.name === em.name ? em.color + '22' : 'var(--card)',
+                      cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                      transition: 'all 0.15s', fontFamily: 'inherit',
+                    }}>
+                      <span style={{ fontSize: 22 }}>{em.emoji}</span>
+                      <span style={{ fontSize: 10, color: qEmotion?.name === em.name ? em.color : 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.2 }}>{em.name}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Intensidad */}
+                <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 10 }}>
+                  Intensidad
+                </p>
+                <div style={{ display: 'flex', gap: 5, marginBottom: 20 }}>
+                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                    <button key={n} onClick={() => setQIntensity(n)} style={{
+                      flex: 1, padding: '9px 0', borderRadius: 8,
+                      border: `1.5px solid ${qIntensity === n ? (qEmotion?.color || 'var(--ph-orange)') : 'var(--border)'}`,
+                      background: qIntensity === n ? (qEmotion?.color || 'var(--ph-orange)') + '22' : 'var(--card)',
+                      cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                      color: qIntensity === n ? (qEmotion?.color || 'var(--ph-orange)') : 'var(--text-secondary)',
+                      transition: 'all 0.1s', fontFamily: 'inherit',
+                    }}>{n}</button>
+                  ))}
+                </div>
+
+                {/* Nota */}
+                <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 10 }}>
+                  ¿Qué ha pasado?
+                </p>
+                <textarea
+                  value={qNote}
+                  onChange={e => setQNote(e.target.value)}
+                  maxLength={200}
+                  placeholder="Escribe brevemente el contexto…"
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: 10, fontSize: 14,
+                    border: '1px solid var(--border)', background: 'var(--input-bg)',
+                    color: 'var(--text)', resize: 'none', height: 80,
+                    fontFamily: 'inherit', lineHeight: 1.5, outline: 'none',
+                    caretColor: 'var(--ph-orange)',
+                  }}
+                />
+                <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--text-muted)', marginTop: 4, marginBottom: 16 }}>
+                  {qNote.length}/200
+                </div>
+
+                {/* Guardar */}
+                <button
+                  onClick={handleSave}
+                  disabled={!canSave || saving}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: 12,
+                    background: canSave ? 'var(--ph-orange)' : 'var(--border)',
+                    border: 'none', color: canSave ? '#fff' : 'var(--text-muted)',
+                    fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'not-allowed',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                >
+                  {saving ? 'Guardando…' : 'Guardar'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     /* ── Pantalla Home ── */
-    function HomeScreen({ setActiveTab, darkMode, setDarkMode }) {
+    function HomeScreen({ setActiveTab, darkMode, setDarkMode, ptiConfig }) {
       const [stats, setStats] = useState(null);
       const [loadingStats, setLoadingStats] = useState(true);
+      const [weekRecords, setWeekRecords] = useState([]);
+      const [showQuick, setShowQuick] = useState(false);
 
       useEffect(() => { loadStats(); }, []);
 
@@ -494,7 +634,7 @@
         sevenAgo.setDate(sevenAgo.getDate() - 7);
 
         const { data } = await db.from('registros')
-          .select('created_at, patterns_active, emotion_name')
+          .select('created_at, patterns_active, emotion_name, emotion_emoji, intensity, values_selected')
           .gte('created_at', thirtyAgo.toISOString())
           .order('created_at', { ascending: false });
 
@@ -520,15 +660,97 @@
             if (days.has(d.toLocaleDateString('es-ES'))) { streak++; } else { break; }
           }
 
+          setWeekRecords(weekData);
           setStats({ weekCount: weekData.length, topPatterns, streak, lastRecord: data[0] || null });
         }
         setLoadingStats(false);
+      };
+
+      const prepareSession = async () => {
+        const sevenAgo = new Date();
+        sevenAgo.setDate(sevenAgo.getDate() - 7);
+        const today = new Date();
+        const dateRange = `${sevenAgo.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${today.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+        const emotionCount = {};
+        weekRecords.forEach(r => {
+          if (r.emotion_name) {
+            const key = `${r.emotion_emoji || ''} ${r.emotion_name}`.trim();
+            emotionCount[key] = (emotionCount[key] || 0) + 1;
+          }
+        });
+        const topEmotions = Object.entries(emotionCount).sort((a, b) => b[1] - a[1]);
+
+        const patternCount = {};
+        weekRecords.forEach(r => {
+          if (r.patterns_active && r.patterns_active.length) {
+            r.patterns_active.forEach(p => { patternCount[p] = (patternCount[p] || 0) + 1; });
+          }
+        });
+        const topPats = Object.entries(patternCount).sort((a, b) => b[1] - a[1]);
+
+        const valSet = new Set();
+        weekRecords.forEach(r => {
+          if (r.values_selected && r.values_selected.length) {
+            r.values_selected.forEach(v => valSet.add(v));
+          }
+        });
+
+        const maxRecord = weekRecords.reduce((max, r) => (!max || r.intensity > max.intensity ? r : max), null);
+
+        const lines = [
+          `📋 RESUMEN SEMANAL — Projecte Home`,
+          `${dateRange}`,
+          ``,
+          `📊 ${weekRecords.length} registro${weekRecords.length !== 1 ? 's' : ''} esta semana`,
+          ``,
+        ];
+
+        if (topEmotions.length) {
+          lines.push(`😤 EMOCIONES`);
+          topEmotions.forEach(([name, count]) => {
+            lines.push(`• ${name} (${count} ${count !== 1 ? 'veces' : 'vez'})`);
+          });
+          lines.push(``);
+        }
+
+        if (topPats.length) {
+          lines.push(`🔄 PATRONES ACTIVADOS`);
+          topPats.forEach(([name, count]) => {
+            lines.push(`• ${name} (${count} ${count !== 1 ? 'veces' : 'vez'})`);
+          });
+          lines.push(``);
+        }
+
+        if (maxRecord) {
+          const d = new Date(maxRecord.created_at);
+          const dateStr = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+          lines.push(`⭐ REGISTRO MÁS INTENSO`);
+          lines.push(`${maxRecord.emotion_emoji || ''} ${maxRecord.emotion_name} · ${maxRecord.intensity}/10 — ${dateStr}`);
+          lines.push(``);
+        }
+
+        if (valSet.size) {
+          lines.push(`❤️ VALORES PRACTICADOS`);
+          lines.push(Array.from(valSet).join(', '));
+          lines.push(``);
+        }
+
+        lines.push(`— Preparado con Projecte Home`);
+        const text = lines.join('\n');
+
+        if (navigator.share) {
+          try { await navigator.share({ title: 'Resumen semanal', text }); } catch(e) {}
+        } else {
+          try { await navigator.clipboard.writeText(text); } catch(e) {}
+        }
       };
 
       const hour = new Date().getHours();
       const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
 
       return (
+        <>
         <div className={`ej-root${darkMode ? '' : ' light'}`}>
           <div className="ej-container">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -552,10 +774,35 @@
               background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)',
               color: 'var(--ph-soft-text)', fontSize: 15, fontWeight: 500,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              fontFamily: 'inherit', marginBottom: 24, transition: 'all 0.2s',
+              fontFamily: 'inherit', marginBottom: 8, transition: 'all 0.2s',
             }}>
               ✏️ Registrar emoción
             </button>
+
+            <button onClick={() => setShowQuick(true)} style={{
+              width: '100%', padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
+              background: 'transparent', border: '1px solid var(--border)',
+              color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              fontFamily: 'inherit', marginBottom: 10, transition: 'all 0.2s',
+            }}>
+              ⚡ Registro rápido
+            </button>
+
+            {!loadingStats && stats && stats.weekCount > 0 && (
+              <button onClick={prepareSession} style={{
+                width: '100%', padding: '13px 16px', borderRadius: 12, cursor: 'pointer',
+                background: 'transparent', border: '1px solid var(--border)',
+                color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                fontFamily: 'inherit', marginBottom: 24, transition: 'all 0.2s',
+              }}>
+                📋 Preparar sesión de terapia
+              </button>
+            )}
+            {(loadingStats || !stats || stats.weekCount === 0) && (
+              <div style={{ marginBottom: 24 }} />
+            )}
 
             {loadingStats && (
               <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -609,7 +856,7 @@
                   Tus fortalezas
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'].map(f => (
+                  {(ptiConfig?.strengths || DEFAULT_STRENGTHS).map(f => (
                     <div key={f} style={{
                       background: 'var(--card)', border: '1px solid var(--border)',
                       borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'var(--text)',
@@ -620,12 +867,314 @@
             )}
           </div>
         </div>
+
+        {showQuick && (
+          <QuickRegisterModal
+            darkMode={darkMode}
+            onClose={() => setShowQuick(false)}
+            onSaved={() => { setShowQuick(false); loadStats(); }}
+          />
+        )}
+        </>
+      );
+    }
+
+    /* ── Tendencias del historial ── */
+    function TendenciasView({ darkMode, setDarkMode, onBack }) {
+      const [loading, setLoading] = useState(true);
+      const [weeklyData, setWeeklyData] = useState([]); // [{label, counts: {patronLabel: n}}]
+      const [topPatterns, setTopPatterns] = useState([]);
+
+      useEffect(() => { loadData(); }, []);
+
+      const loadData = async () => {
+        const { data } = await db.from('registros')
+          .select('created_at, patterns_active')
+          .order('created_at', { ascending: false });
+
+        if (!data || data.length === 0) { setLoading(false); return; }
+
+        // Últimas 10 semanas
+        const NUM_WEEKS = 10;
+        const weeks = [];
+        const now = new Date();
+        for (let i = NUM_WEEKS - 1; i >= 0; i--) {
+          const start = new Date(now);
+          start.setDate(start.getDate() - (i + 1) * 7);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(now);
+          end.setDate(end.getDate() - i * 7);
+          end.setHours(23, 59, 59, 999);
+          const weekNum = `S-${i === 0 ? 'actual' : i}`;
+          weeks.push({ start, end, label: i === 0 ? 'Esta sem.' : i === 1 ? 'Sem. ant.' : `Hace ${i}s`, counts: {} });
+        }
+
+        // Contar total por patrón para elegir top 5
+        const totalCount = {};
+        data.forEach(r => {
+          if (r.patterns_active) r.patterns_active.forEach(p => { totalCount[p] = (totalCount[p] || 0) + 1; });
+        });
+        const top5 = Object.entries(totalCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k]) => k);
+
+        // Distribuir registros por semana
+        data.forEach(r => {
+          const d = new Date(r.created_at);
+          const week = weeks.find(w => d >= w.start && d <= w.end);
+          if (week && r.patterns_active) {
+            r.patterns_active.forEach(p => {
+              if (top5.includes(p)) week.counts[p] = (week.counts[p] || 0) + 1;
+            });
+          }
+        });
+
+        setTopPatterns(top5);
+        setWeeklyData(weeks);
+        setLoading(false);
+      };
+
+      const PATTERN_COLORS = ['#F26522', '#4A9EE0', '#6BAA28', '#8B7FE8', '#E05890'];
+      const maxVal = Math.max(1, ...weeklyData.flatMap(w => topPatterns.map(p => w.counts[p] || 0)));
+
+      return (
+        <div className={`ej-root${darkMode ? '' : ' light'}`}>
+          <div className="ej-container">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <button onClick={onBack} style={{
+                background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
+                width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
+              }}>
+                <i className="ti ti-arrow-left" style={{ fontSize: 18, color: 'var(--text-secondary)' }} />
+              </button>
+              <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', flex: 1 }}>Tendencias</h2>
+              <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>{darkMode ? '☀️' : '🌙'}</button>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
+              Evolución de tus patrones en las últimas 10 semanas. ¿Estás gestionando mejor?
+            </p>
+
+            {loading && <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>Cargando…</div>}
+
+            {!loading && topPatterns.length === 0 && (
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, textAlign: 'center' }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>📊</div>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Aún no hay datos suficientes.<br/>Haz más registros para ver tendencias.</p>
+              </div>
+            )}
+
+            {!loading && topPatterns.length > 0 && (
+              <>
+                {/* Leyenda */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                  {topPatterns.map((p, i) => {
+                    const pd = PATTERNS.find(x => x.label === p);
+                    return (
+                      <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: '4px 10px' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS[i], flexShrink: 0 }} />
+                        <span style={{ fontSize: 11, color: 'var(--text)', fontWeight: 500 }}>{pd?.emoji} {p}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Gráfico de barras por semana */}
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 12px', marginBottom: 16 }}>
+                  {weeklyData.map((week, wi) => {
+                    const hasData = topPatterns.some(p => (week.counts[p] || 0) > 0);
+                    return (
+                      <div key={wi} style={{ marginBottom: wi < weeklyData.length - 1 ? 14 : 0 }}>
+                        <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 5, fontWeight: wi === weeklyData.length - 1 ? 600 : 400, color: wi === weeklyData.length - 1 ? 'var(--ph-orange)' : 'var(--text-secondary)' }}>
+                          {week.label}
+                        </div>
+                        {!hasData ? (
+                          <div style={{ height: 18, display: 'flex', alignItems: 'center' }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin registros</span>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: 3 }}>
+                            {topPatterns.map((p, pi) => {
+                              const count = week.counts[p] || 0;
+                              const width = count > 0 ? Math.max(8, (count / maxVal) * 100) : 0;
+                              return (
+                                <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 3, flex: count > 0 ? `0 0 ${width}%` : '0 0 6px', minWidth: count > 0 ? 24 : 6, transition: 'flex 0.4s ease' }}>
+                                  {count > 0 && (
+                                    <div style={{
+                                      height: 22, borderRadius: 4, width: '100%',
+                                      background: PATTERN_COLORS[pi],
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    }}>
+                                      <span style={{ fontSize: 10, color: '#fff', fontWeight: 700 }}>{count}</span>
+                                    </div>
+                                  )}
+                                  {count === 0 && (
+                                    <div style={{ height: 22, width: 4, borderRadius: 2, background: 'var(--border)' }} />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Insight */}
+                {(() => {
+                  const recent = weeklyData.slice(-3);
+                  const older = weeklyData.slice(-8, -3);
+                  const recentTotal = recent.reduce((s, w) => s + topPatterns.reduce((ss, p) => ss + (w.counts[p] || 0), 0), 0);
+                  const olderTotal = older.reduce((s, w) => s + topPatterns.reduce((ss, p) => ss + (w.counts[p] || 0), 0), 0);
+                  const olderAvg = olderTotal / Math.max(older.length, 1);
+                  const recentAvg = recentTotal / Math.max(recent.length, 1);
+                  const trend = recentAvg < olderAvg * 0.8 ? 'mejor' : recentAvg > olderAvg * 1.2 ? 'más' : 'similar';
+                  const msg = trend === 'mejor'
+                    ? '📉 Tendencia positiva — estás activando menos patrones que hace semanas.'
+                    : trend === 'más'
+                    ? '📈 Más activaciones recientes — puede ser un buen momento para revisarlo en terapia.'
+                    : '➡️ Ritmo estable — sin cambios significativos en las últimas semanas.';
+                  return (
+                    <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 12, padding: '12px 14px' }}>
+                      <p style={{ fontSize: 13, color: 'var(--ph-soft-text)', lineHeight: 1.6, margin: 0 }}>{msg}</p>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Vista editar PTI ── */
+    function PTIEditView({ darkMode, ptiConfig, onBack, onSaved }) {
+      const [strengths, setStrengths] = useState(ptiConfig?.strengths || [...DEFAULT_STRENGTHS]);
+      const [activePatterns, setActivePatterns] = useState(ptiConfig?.active_patterns || []);
+      const [patternNotes, setPatternNotes] = useState(ptiConfig?.pattern_notes || {});
+      const [saving, setSaving] = useState(false);
+      const [savedOk, setSavedOk] = useState(false);
+      const [newStrength, setNewStrength] = useState('');
+      const [expandedPat, setExpandedPat] = useState(null);
+
+      const togglePattern = (id) => {
+        setActivePatterns(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      };
+
+      const handleSave = async () => {
+        setSaving(true);
+        await db.from('pti_config').upsert({
+          id: 1,
+          strengths,
+          active_patterns: activePatterns,
+          pattern_notes: patternNotes,
+          updated_at: new Date().toISOString(),
+        });
+        setSaving(false); setSavedOk(true);
+        setTimeout(() => { onSaved(); onBack(); }, 800);
+      };
+
+      return (
+        <div className={`ej-root${darkMode ? '' : ' light'}`}>
+          <div className="ej-container">
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <button onClick={onBack} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                <i className="ti ti-arrow-left" style={{ fontSize: 18, color: 'var(--text-secondary)' }} />
+              </button>
+              <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', flex: 1 }}>Editar mi PTI</h2>
+            </div>
+
+            {/* Fortalezas */}
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 10 }}>
+              Mis fortalezas
+            </div>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
+              {strengths.map((s, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '11px 14px', borderBottom: i < strengths.length - 1 ? '1px solid var(--border)' : 'none', gap: 10 }}>
+                  <input
+                    value={s}
+                    onChange={e => setStrengths(prev => prev.map((x, j) => j === i ? e.target.value : x))}
+                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)', fontFamily: 'inherit' }}
+                  />
+                  <button onClick={() => setStrengths(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-muted)', fontSize: 16, lineHeight: 1 }}>×</button>
+                </div>
+              ))}
+            </div>
+            {strengths.length < 6 && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                <input
+                  value={newStrength}
+                  onChange={e => setNewStrength(e.target.value)}
+                  placeholder="Nueva fortaleza…"
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter' && newStrength.trim()) { setStrengths(p => [...p, newStrength.trim()]); setNewStrength(''); } }}
+                />
+                <button
+                  onClick={() => { if (newStrength.trim()) { setStrengths(p => [...p, newStrength.trim()]); setNewStrength(''); } }}
+                  style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--ph-orange)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >+</button>
+              </div>
+            )}
+
+            {/* Patrones activos */}
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 10 }}>
+              Patrones que estoy trabajando
+            </div>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
+              {PATTERNS.map((p, i) => {
+                const isActive = activePatterns.includes(p.id);
+                const isExpanded = expandedPat === p.id;
+                const note = patternNotes[p.id] || '';
+                return (
+                  <div key={p.id} style={{ borderBottom: i < PATTERNS.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', gap: 10 }}>
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>{p.emoji}</span>
+                      <span style={{ flex: 1, fontSize: 13, color: 'var(--text)', fontWeight: isActive ? 500 : 400 }}>{p.label}</span>
+                      <button onClick={() => setExpandedPat(isExpanded ? null : p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: 'var(--text-secondary)', fontSize: 11 }}>
+                        {note ? '📝' : '✏️'}
+                      </button>
+                      <button onClick={() => togglePattern(p.id)} style={{
+                        width: 24, height: 24, borderRadius: 6, border: `1.5px solid ${isActive ? 'var(--ph-orange)' : 'var(--border)'}`,
+                        background: isActive ? 'var(--ph-orange)' : 'transparent', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        {isActive && <i className="ti ti-check" style={{ fontSize: 13, color: '#fff' }} />}
+                      </button>
+                    </div>
+                    {isExpanded && (
+                      <div style={{ padding: '0 14px 12px' }}>
+                        <textarea
+                          value={note}
+                          onChange={e => setPatternNotes(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          placeholder={`¿Cómo se manifiesta ${p.label.toLowerCase()} en tu caso?`}
+                          style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: 12, fontFamily: 'inherit', resize: 'none', height: 70, outline: 'none', lineHeight: 1.5 }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Guardar */}
+            <button onClick={handleSave} disabled={saving} style={{
+              width: '100%', padding: '14px', borderRadius: 12,
+              background: savedOk ? '#1DB87A' : 'var(--ph-orange)',
+              border: 'none', color: '#fff', fontSize: 15, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.3s',
+              marginBottom: 32,
+            }}>
+              {savedOk ? '✅ Guardado' : saving ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </div>
+        </div>
       );
     }
 
     /* ── Pantalla Mi PTI ── */
-    function PTIScreen({ darkMode, setDarkMode }) {
-      const [view, setView] = useState('panel'); // 'panel' | 'patrones' | 'emociones' | 'valores' | 'principios'
+    function PTIScreen({ darkMode, setDarkMode, ptiConfig, refreshPTIConfig }) {
+      const [view, setView] = useState('panel'); // 'panel' | 'patrones' | 'emociones' | 'valores' | 'principios' | 'tendencias' | 'editar'
       const [statsData, setStatsData] = useState(null);
       const [loadingStats, setLoadingStats] = useState(true);
       const [expandedPattern, setExpandedPattern] = useState(null);
@@ -722,9 +1271,14 @@
               {/* Cabecera */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)' }}>Mi PTI</h2>
-                <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
-                  {darkMode ? '☀️' : '🌙'}
-                </button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button onClick={() => setView('editar')} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                    ✏️ Editar
+                  </button>
+                  <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
+                    {darkMode ? '☀️' : '🌙'}
+                  </button>
+                </div>
               </div>
 
               {/* Stats rápidas */}
@@ -764,7 +1318,7 @@
                 iconColor="var(--ph-orange)"
                 title="Mis patrones"
                 subtitle={`10 patrones de conducta del PTI`}
-                badge={statsData && Object.keys(statsData.patternCount).length > 0 ? `${Object.keys(statsData.patternCount).length} activos` : null}
+                badge={ptiConfig?.active_patterns?.length > 0 ? `${ptiConfig.active_patterns.length} trabajando` : null}
                 onClick={() => setView('patrones')}
               />
               <NavCard
@@ -791,13 +1345,21 @@
                 subtitle="10 compromisos contigo mismo"
                 onClick={() => setView('principios')}
               />
+              <NavCard
+                icon="ti-chart-bar"
+                iconBg="#e6f4ec"
+                iconColor="#1B7A3E"
+                title="Tendencias"
+                subtitle="Evolución de tus patrones semana a semana"
+                onClick={() => setView('tendencias')}
+              />
 
               {/* Fortalezas */}
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginTop: 8, marginBottom: 10, fontWeight: 500 }}>
                 Tus fortalezas
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {['Agradable 🤝', 'Empático 💙', 'Honesto 💬', 'Responsable 🎯'].map(f => (
+                {(ptiConfig?.strengths || DEFAULT_STRENGTHS).map(f => (
                   <div key={f} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)' }}>
                     {f}
                   </div>
@@ -826,6 +1388,7 @@
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{p.label}</div>
                       {count > 0 && <div style={{ fontSize: 11, color: 'var(--ph-soft-text)', marginTop: 2 }}>{count} vez{count !== 1 ? 'es' : ''} registrado</div>}
+                      {ptiConfig?.active_patterns?.includes(p.id) && <div style={{ fontSize: 10, color: 'var(--ph-orange)', marginTop: 2, fontWeight: 600 }}>★ Trabajando en esto</div>}
                     </div>
                     <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ fontSize: 16, color: 'var(--text-secondary)' }} aria-hidden="true" />
                   </div>
@@ -847,6 +1410,12 @@
                       <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text)', lineHeight: 1.65, fontFamily: 'DM Serif Display, Georgia, serif' }}>
                         {p.q}
                       </p>
+                      {ptiConfig?.pattern_notes?.[p.id] && (
+                        <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 8 }}>
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ph-soft-text)', fontWeight: 700, marginBottom: 4 }}>Mi nota personal</div>
+                          <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.6, margin: 0 }}>{ptiConfig.pattern_notes[p.id]}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -956,6 +1525,25 @@
             </div>
           </div>
         </div>
+      );
+
+      /* ── VISTA: Tendencias ── */
+      if (view === 'tendencias') return (
+        <>
+          <TendenciasView darkMode={darkMode} setDarkMode={setDarkMode} onBack={() => setView('panel')} />
+        </>
+      );
+
+      /* ── VISTA: Editar PTI ── */
+      if (view === 'editar') return (
+        <>
+          <PTIEditView
+            darkMode={darkMode}
+            ptiConfig={ptiConfig}
+            onBack={() => setView('panel')}
+            onSaved={refreshPTIConfig}
+          />
+        </>
       );
 
       return null;
@@ -1176,6 +1764,7 @@
       const [anio, setAnio] = useState(now.getFullYear());
       const [saving, setSaving] = useState(false);
       const [saved,  setSaved]  = useState(false);
+      const [emoData, setEmoData] = useState(null);
 
       const INGRESOS_KEYS = [
         { key: 'nomina1',   label: 'Nómina 1'       },
@@ -1240,7 +1829,37 @@
           setIngresos(blankRows(INGRESOS_KEYS));
           setGastos(blankRows(GASTOS_KEYS));
         }
+        loadEmoData();
       }, [mes, anio]);
+
+      const loadEmoData = async () => {
+        const start = new Date(anio, mes - 1, 1).toISOString();
+        const end   = new Date(anio, mes, 0, 23, 59, 59).toISOString();
+        const { data } = await db.from('registros')
+          .select('emotion_name, emotion_emoji, intensity, patterns_active')
+          .gte('created_at', start).lte('created_at', end);
+
+        if (!data || data.length === 0) { setEmoData(null); return; }
+
+        const emotionCount = {};
+        data.forEach(r => {
+          if (r.emotion_name) {
+            const key = `${r.emotion_emoji || ''} ${r.emotion_name}`.trim();
+            emotionCount[key] = (emotionCount[key] || 0) + 1;
+          }
+        });
+        const topEmotions = Object.entries(emotionCount).sort((a,b) => b[1]-a[1]).slice(0, 3);
+
+        const patternCount = {};
+        data.forEach(r => {
+          if (r.patterns_active) r.patterns_active.forEach(p => { patternCount[p] = (patternCount[p] || 0) + 1; });
+        });
+        const topPatterns = Object.entries(patternCount).sort((a,b) => b[1]-a[1]).slice(0, 3);
+
+        const avgIntensity = (data.reduce((s, r) => s + (r.intensity || 0), 0) / data.length).toFixed(1);
+
+        setEmoData({ total: data.length, topEmotions, topPatterns, avgIntensity });
+      };
 
       const sum = (obj, col) => col === 'real'
         ? Object.values(obj).reduce((acc, v) => acc + realTotal(v), 0)
@@ -1298,6 +1917,29 @@
           ``,
           `💧 Flujo neto: ${fmt(flujoEst)}€ est / ${fmt(flujoReal)}€ real / ${difStr(flujoEst, flujoReal)}`,
         ];
+
+        if (emoData) {
+          lines.push(``, `🧠 ESTADO EMOCIONAL · ${MESES[mes-1]}`);
+          lines.push(`${emoData.total} registro${emoData.total !== 1 ? 's' : ''} · Intensidad media: ${emoData.avgIntensity}/10`);
+          if (emoData.topEmotions.length) {
+            lines.push(`Emociones: ${emoData.topEmotions.map(([n,c]) => `${n} (${c}×)`).join(', ')}`);
+          }
+          if (emoData.topPatterns.length) {
+            lines.push(`Patrones: ${emoData.topPatterns.map(([n,c]) => `${n} (${c}×)`).join(', ')}`);
+          }
+          const avgI = parseFloat(emoData.avgIntensity);
+          const ocioReal = realTotal(gastos['ocio']) + realTotal(gastos['comer_fuera']);
+          const ocioEst  = (parseFloat(gastos['ocio']?.est) || 0) + (parseFloat(gastos['comer_fuera']?.est) || 0);
+          const ocioDiff = ocioEst > 0 ? Math.round(((ocioReal - ocioEst) / ocioEst) * 100) : 0;
+          if (avgI >= 7 && ocioDiff > 20) {
+            lines.push(`💡 Mes intenso (${emoData.avgIntensity}/10) + ocio/salidas ${ocioDiff > 0 ? '+' : ''}${ocioDiff}% sobre estimado. ¿Influyó el estado emocional en el gasto?`);
+          } else if (avgI >= 7) {
+            lines.push(`💡 Mes de alta intensidad emocional (${emoData.avgIntensity}/10). Revisar si influyó en decisiones económicas.`);
+          } else if (avgI < 4 && emoData.total >= 5) {
+            lines.push(`💡 Mes de baja intensidad emocional (${emoData.avgIntensity}/10). Señal de estabilidad.`);
+          }
+        }
+
         try {
           await navigator.share({ title: `Cierre ${MESES[mes-1]} ${anio}`, text: lines.join('\n') });
         } catch(e) {}
@@ -1372,6 +2014,67 @@
                 {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
+
+            {/* Estado emocional del mes */}
+            {emoData && (
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 12 }}>
+                  🧠 Estado emocional · {MESES[mes-1]}
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                  <div style={{ flex: 1, background: 'var(--ph-soft-bg)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ph-orange)' }}>{emoData.total}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2 }}>registros</div>
+                  </div>
+                  <div style={{ flex: 1, background: 'var(--ph-soft-bg)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ph-navy)' }}>{emoData.avgIntensity}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2 }}>intensidad media</div>
+                  </div>
+                </div>
+                {emoData.topEmotions.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 500 }}>Emociones</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {emoData.topEmotions.map(([name, count]) => (
+                        <span key={name} style={{ fontSize: 12, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', color: 'var(--text)' }}>
+                          {name} <span style={{ color: 'var(--text-secondary)' }}>{count}×</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {emoData.topPatterns.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 500 }}>Patrones activados</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {emoData.topPatterns.map(([name, count]) => (
+                        <span key={name} style={{ fontSize: 12, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', color: 'var(--text)' }}>
+                          {name} <span style={{ color: 'var(--text-secondary)' }}>{count}×</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(() => {
+                  const avgI = parseFloat(emoData.avgIntensity);
+                  const ocioReal = realTotal(gastos['ocio']) + realTotal(gastos['comer_fuera']);
+                  const ocioEst  = (parseFloat(gastos['ocio']?.est) || 0) + (parseFloat(gastos['comer_fuera']?.est) || 0);
+                  const ocioDiff = ocioEst > 0 ? Math.round(((ocioReal - ocioEst) / ocioEst) * 100) : 0;
+                  let insight = null;
+                  if (avgI >= 7 && ocioDiff > 20)
+                    insight = `Mes emocionalmente intenso (${emoData.avgIntensity}/10) con ocio/salidas ${ocioDiff > 0 ? '+' : ''}${ocioDiff}% sobre estimado. ¿Las emociones influyeron en el gasto?`;
+                  else if (avgI >= 7)
+                    insight = `Mes de alta intensidad emocional (${emoData.avgIntensity}/10). ¿Cómo afectó al gasto este mes?`;
+                  else if (avgI < 4 && emoData.total >= 5)
+                    insight = `Mes de baja intensidad emocional (${emoData.avgIntensity}/10). Señal de estabilidad.`;
+                  return insight ? (
+                    <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 8, padding: '10px 12px' }}>
+                      <p style={{ fontSize: 12, color: 'var(--ph-soft-text)', lineHeight: 1.6, margin: 0 }}>💡 {insight}</p>
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            )}
 
             {/* Cabeceras columnas */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 68px', gap: 6, marginBottom: 8, paddingLeft: 2 }}>
@@ -1472,11 +2175,19 @@
       const [loading, setLoading]               = useState(false);
       const [error, setError]                   = useState(null);
       const [saved, setSaved]                   = useState(false);
+      const [ptiConfig, setPTIConfig]           = useState(null);
 
       useEffect(() => {
         const storedTheme = localStorage.getItem('ej_dark_mode');
         if (storedTheme !== null) setDarkMode(storedTheme === 'true');
       }, []);
+
+      useEffect(() => { loadPTIConfig(); }, []);
+
+      const loadPTIConfig = async () => {
+        const { data } = await db.from('pti_config').select('*').eq('id', 1).maybeSingle();
+        if (data) setPTIConfig(data);
+      };
 
       useEffect(() => {
         document.documentElement.classList.toggle('light', !darkMode);
@@ -1571,14 +2282,14 @@
       /* ── Renders de tabs ── */
       if (activeTab === 'home') return (
         <>
-          <HomeScreen setActiveTab={setActiveTab} darkMode={darkMode} setDarkMode={setDarkMode} />
+          <HomeScreen setActiveTab={setActiveTab} darkMode={darkMode} setDarkMode={setDarkMode} ptiConfig={ptiConfig} />
           <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
         </>
       );
 
       if (activeTab === 'pti') return (
         <>
-          <PTIScreen darkMode={darkMode} setDarkMode={setDarkMode} />
+          <PTIScreen darkMode={darkMode} setDarkMode={setDarkMode} ptiConfig={ptiConfig} refreshPTIConfig={loadPTIConfig} />
           <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
         </>
       );
