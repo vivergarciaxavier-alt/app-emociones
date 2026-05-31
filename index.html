@@ -709,28 +709,34 @@
         try { await navigator.share({ title: 'Revisión semanal', text: lines.join('\n') }); } catch(e) {}
       };
 
+      const topPatPattern = weekData?.topPat ? PATTERNS.find(p => p.label === weekData.topPat[0]) : null;
+
       const questions = [
         {
           label: weekData?.topEmo
             ? `Tu emoción más presente esta semana fue "${weekData.topEmo[0]}" (${weekData.topEmo[1]} ${weekData.topEmo[1]>1?'veces':'vez'})`
             : 'Emoción más presente esta semana',
           placeholder: '¿Qué hay detrás de ella? ¿Te resulta familiar?',
+          context: null,
         },
         {
           label: weekData?.topPat
             ? `Activaste el patrón "${weekData.topPat[0]}" ${weekData.topPat[1]} ${weekData.topPat[1]>1?'veces':'vez'}`
             : 'Patrón más activado',
           placeholder: '¿Cómo lo gestionaste? ¿Usaste alguna herramienta del PTI?',
+          context: topPatPattern ? topPatPattern.q : null,
         },
         {
           label: weekData
             ? `Tu intensidad media fue ${weekData.avgIntensity}/10`
             : 'Intensidad emocional de la semana',
           placeholder: '¿Cómo describirías la semana emocionalmente?',
+          context: null,
         },
         {
           label: '¿Qué te llevas?',
           placeholder: '¿Qué aprendizaje o insight te llevas? ¿Qué quieres trabajar la próxima semana?',
+          context: null,
         },
       ];
 
@@ -780,6 +786,11 @@
                       lineHeight: 1.5,
                     }}
                   />
+                  {q.context && (
+                    <div style={{ fontSize: 11, color: 'var(--ph-soft-text)', background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 8, padding: '8px 10px', marginTop: 6, fontStyle: 'italic', lineHeight: 1.6 }}>
+                      💡 PTI: "{q.context}"
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -957,7 +968,7 @@
           if (stored) revisionAnswers = JSON.parse(stored)?.answers || null;
         } catch(e) {}
 
-        setSessionData({ dateRange, topEmotions, maxRecord, revisionAnswers, total: weekRecords.length });
+        setSessionData({ dateRange, topEmotions, maxRecord, revisionAnswers, total: weekRecords.length, ptiConfig });
         setShowSessionPreview(true);
       };
 
@@ -992,7 +1003,26 @@
           });
           lines.push(``);
         }
-        lines.push(`— Preparado con Mi Camino`);
+        if (sessionData.ptiConfig?.active_patterns?.length > 0) {
+          lines.push(``, `🧠 PATRONES QUE TRABAJO`);
+          sessionData.ptiConfig.active_patterns.forEach(patId => {
+            const p = PATTERNS.find(x => x.id === patId);
+            if (!p) return;
+            lines.push(`${p.emoji} ${p.label}`);
+            const note = sessionData.ptiConfig.pattern_notes?.[patId];
+            if (note) lines.push(`   → ${note}`);
+          });
+          const linkedValues = new Set();
+          sessionData.ptiConfig.active_patterns.forEach(patId => {
+            const p = PATTERNS.find(x => x.id === patId);
+            if (p?.values) p.values.forEach(v => linkedValues.add(v));
+          });
+          if (linkedValues.size) {
+            const vLabels = [...linkedValues].map(vId => ALL_VALUES.find(v => v.id === vId)?.label).filter(Boolean);
+            lines.push(`Valores: ${vLabels.join(', ')}`);
+          }
+        }
+        lines.push(``, `— Preparado con Mi Camino`);
         const text = lines.join('\n');
         if (navigator.share) {
           try { await navigator.share({ title: 'Sesión de terapia', text }); } catch(e) {}
@@ -1068,6 +1098,33 @@
                 </p>
               </div>
             </div>
+
+            {/* ── Trabajando en (patrones activos del PTI) ── */}
+            {ptiConfig?.active_patterns?.length > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
+                  Trabajando en
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {ptiConfig.active_patterns.map(patId => {
+                    const p = PATTERNS.find(x => x.id === patId);
+                    if (!p) return null;
+                    return (
+                      <button key={patId} onClick={() => setActiveTab('pti')} style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        background: 'var(--card)', border: '1px solid var(--border)',
+                        borderRadius: 20, padding: '5px 11px',
+                        fontSize: 12, color: 'var(--text)', cursor: 'pointer',
+                        fontFamily: 'inherit', transition: 'all 0.15s',
+                      }}>
+                        <span>{p.emoji}</span>
+                        <span>{p.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* ── Hábitos de hoy — grid prominente ── */}
             <div style={{ marginBottom: 14 }}>
@@ -1307,6 +1364,48 @@
                 </div>
               )}
 
+              {/* PTI activo */}
+              {sessionData.ptiConfig?.active_patterns?.length > 0 && (
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 10 }}>🧠 Patrones que trabajas</div>
+                  {sessionData.ptiConfig.active_patterns.map(patId => {
+                    const p = PATTERNS.find(x => x.id === patId);
+                    if (!p) return null;
+                    const note = sessionData.ptiConfig.pattern_notes?.[patId];
+                    return (
+                      <div key={patId} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid var(--divider)' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{p.emoji}</span>{p.label}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.5, fontStyle: 'italic' }}>{p.q}</div>
+                        {note && <div style={{ fontSize: 12, color: 'var(--ph-soft-text)', background: 'var(--ph-soft-bg)', borderRadius: 6, padding: '5px 8px', marginTop: 5, lineHeight: 1.5 }}>{note}</div>}
+                      </div>
+                    );
+                  })}
+                  {(() => {
+                    const linkedValues = new Set();
+                    sessionData.ptiConfig.active_patterns.forEach(patId => {
+                      const p = PATTERNS.find(x => x.id === patId);
+                      if (p?.values) p.values.forEach(v => linkedValues.add(v));
+                    });
+                    const valueDetails = [...linkedValues].map(vId => ALL_VALUES.find(v => v.id === vId)).filter(Boolean);
+                    if (!valueDetails.length) return null;
+                    return (
+                      <div style={{ paddingTop: 4 }}>
+                        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 500 }}>Valores en juego</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {valueDetails.map(v => (
+                            <span key={v.id} style={{ fontSize: 11, background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', color: 'var(--ph-soft-text)', borderRadius: 20, padding: '2px 9px' }}>
+                              {v.emoji} {v.label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
               <button onClick={shareSession} style={{
                 width: '100%', padding: '14px', borderRadius: 12, marginTop: 4,
                 background: 'var(--ph-orange)', border: 'none',
@@ -1500,6 +1599,14 @@
       const [savedOk, setSavedOk] = useState(false);
       const [newStrength, setNewStrength] = useState('');
       const [expandedPat, setExpandedPat] = useState(null);
+      const [principles, setPrinciples] = useState(() => {
+        try {
+          const s = localStorage.getItem('pti_principles');
+          if (s) return JSON.parse(s);
+        } catch(e) {}
+        return MY_PRINCIPLES.map(p => p.texto);
+      });
+      const [newPrinciple, setNewPrinciple] = useState('');
 
       const togglePattern = (id) => {
         setActivePatterns(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -1507,6 +1614,7 @@
 
       const handleSave = async () => {
         setSaving(true);
+        localStorage.setItem('pti_principles', JSON.stringify(principles));
         await db.from('pti_config').upsert({
           id: 1,
           strengths,
@@ -1601,6 +1709,39 @@
               })}
             </div>
 
+            {/* Principios */}
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 10 }}>
+              Mis principios
+            </div>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
+              {principles.map((texto, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '11px 14px', borderBottom: i < principles.length - 1 ? '1px solid var(--border)' : 'none', gap: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ph-orange)', minWidth: 20, flexShrink: 0 }}>{i + 1}.</span>
+                  <input
+                    value={texto}
+                    onChange={e => setPrinciples(prev => prev.map((x, j) => j === i ? e.target.value : x))}
+                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)', fontFamily: 'inherit' }}
+                  />
+                  <button onClick={() => setPrinciples(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-muted)', fontSize: 16, lineHeight: 1 }}>×</button>
+                </div>
+              ))}
+            </div>
+            {principles.length < 12 && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                <input
+                  value={newPrinciple}
+                  onChange={e => setNewPrinciple(e.target.value)}
+                  placeholder="Nuevo principio…"
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter' && newPrinciple.trim()) { setPrinciples(p => [...p, newPrinciple.trim()]); setNewPrinciple(''); } }}
+                />
+                <button
+                  onClick={() => { if (newPrinciple.trim()) { setPrinciples(p => [...p, newPrinciple.trim()]); setNewPrinciple(''); } }}
+                  style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--ph-orange)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >+</button>
+              </div>
+            )}
+
             {/* Guardar */}
             <button onClick={handleSave} disabled={saving} style={{
               width: '100%', padding: '14px', borderRadius: 12,
@@ -1656,7 +1797,12 @@
             if (days.has(d.toLocaleDateString('es-ES'))) { streak++; } else { break; }
           }
 
-          setStatsData({ total: data.length, weekCount: weekData.length, streak, patternCount, valuesCount });
+          const emotionCount = {};
+          data.forEach(r => {
+            if (r.emotion_name) emotionCount[r.emotion_name] = (emotionCount[r.emotion_name] || 0) + 1;
+          });
+
+          setStatsData({ total: data.length, weekCount: weekData.length, streak, patternCount, valuesCount, emotionCount });
         }
         setLoadingStats(false);
       };
@@ -1856,6 +2002,23 @@
                       <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text)', lineHeight: 1.65, fontFamily: 'DM Serif Display, Georgia, serif' }}>
                         {p.q}
                       </p>
+                      {p.values?.length > 0 && (
+                        <div style={{ marginTop: 14 }}>
+                          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 6 }}>
+                            Valores relacionados
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {p.values.map(vId => {
+                              const v = ALL_VALUES.find(x => x.id === vId);
+                              return v ? (
+                                <span key={vId} style={{ fontSize: 12, background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', color: 'var(--ph-soft-text)', borderRadius: 20, padding: '3px 10px' }}>
+                                  {v.emoji} {v.label}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
                       {ptiConfig?.pattern_notes?.[p.id] && (
                         <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 8 }}>
                           <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ph-soft-text)', fontWeight: 700, marginBottom: 4 }}>Mi nota personal</div>
@@ -1887,6 +2050,14 @@
                     <span style={{ fontSize: 22 }}>{e.emoji}</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{e.name}</div>
+                      {(() => {
+                        const cnt = statsData?.emotionCount?.[e.name] || 0;
+                        return cnt > 0 ? (
+                          <div style={{ fontSize: 11, color: 'var(--ph-soft-text)', marginTop: 2 }}>
+                            {cnt} vez{cnt !== 1 ? 'es' : ''} registrada
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                     <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ fontSize: 16, color: 'var(--text-secondary)' }} aria-hidden="true" />
                   </div>
@@ -1949,29 +2120,53 @@
       );
 
       /* ── VISTA: Mis Principios ── */
-      if (view === 'principios') return (
-        <div className={`ej-root${darkMode ? '' : ' light'}`}>
-          <div className="ej-container">
-            <SubHeader title="Mis principios" />
-            <div style={{ background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 16 }}>
-              {MY_PRINCIPLES.map((p, i) => (
-                <div key={p.n} style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px',
-                  borderBottom: i < MY_PRINCIPLES.length - 1 ? '1px solid var(--divider)' : 'none',
+      if (view === 'principios') {
+        const storedPrincipios = (() => {
+          try {
+            const s = localStorage.getItem('pti_principles');
+            if (s) return JSON.parse(s);
+          } catch(e) {}
+          return MY_PRINCIPLES.map(p => p.texto);
+        })();
+        return (
+          <div className={`ej-root${darkMode ? '' : ' light'}`}>
+            <div className="ej-container">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <button onClick={() => setView('panel')} style={{
+                  background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
+                  width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', flexShrink: 0,
                 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ph-orange)', minWidth: 24, flexShrink: 0, marginTop: 1 }}>{p.n}.</span>
-                  <span style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.6 }}>{p.texto}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 14, padding: '14px 16px' }}>
-              <p className="ej-serif" style={{ fontSize: 14, color: 'var(--ph-soft-text)', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
-                "Construyo una persona nueva. Una persona de la que estar orgulloso."
-              </p>
+                  <i className="ti ti-arrow-left" style={{ fontSize: 18, color: 'var(--text-secondary)' }} aria-hidden="true" />
+                </button>
+                <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)', flex: 1 }}>Mis principios</h2>
+                <button onClick={() => setView('editar')} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                  ✏️ Editar
+                </button>
+                <button className="theme-toggle" onClick={() => setDarkMode(d => !d)}>
+                  {darkMode ? '☀️' : '🌙'}
+                </button>
+              </div>
+              <div style={{ background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 16 }}>
+                {storedPrincipios.map((texto, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px',
+                    borderBottom: i < storedPrincipios.length - 1 ? '1px solid var(--divider)' : 'none',
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ph-orange)', minWidth: 24, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+                    <span style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.6 }}>{texto}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: 'var(--ph-soft-bg)', border: '1px solid var(--ph-soft-border)', borderRadius: 14, padding: '14px 16px' }}>
+                <p className="ej-serif" style={{ fontSize: 14, color: 'var(--ph-soft-text)', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
+                  "Construyo una persona nueva. Una persona de la que estar orgulloso."
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      }
 
       /* ── VISTA: Tendencias ── */
       if (view === 'tendencias') return (
